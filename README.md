@@ -3,7 +3,7 @@ MATLAB code for processing brain tissue imaging data and measuring fluorescent r
 
 # File List:
 
-## `analyzeROIs.m` - Main function for bulk processing a folder containing either ".tif" or ".spe" image stacks. 
+`analyzeROIs.m` - Main function for bulk processing a folder containing either ".tif" or ".spe" image stacks. 
 
 Useage:
 analyzeROIs(filetype,frameRate)
@@ -13,15 +13,18 @@ filetype - Use either 'tif' or 'spe' to designate the filetype
 frameRate - Enter framerate in units of frames/second
 
 ---
-## `SpeReader.m` - Helper function for importing Princeton Instruments '.spe' image stacks. Obtained from the Mathworks File Exchange (see Legal below)
+
+`SpeReader.m` - Helper function for importing Princeton Instruments '.spe' image stacks. Obtained from the Mathworks File Exchange (see Legal below)
 
 ---
-## `git.m` - Wrapper for using git within MATLAB console. Obtained from the Mathworks File Exchange
+
+`git.m` - Wrapper for using git within MATLAB console. Obtained from the Mathworks File Exchange
 
 ---
 
 # Legal
-## `SpeReader.m`
+`SpeReader.m`
+
 Copyright (c) 2013, W. Jansen 
 All rights reserved.
 
@@ -47,9 +50,9 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 POSSIBILITY OF SUCH DAMAGE.
 
-## `git.m`
-The MIT License (MIT)
+`git.m`
 
+The MIT License (MIT)
 Copyright (c) 2013 Manu Raghavan
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
