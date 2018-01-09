@@ -1,7 +1,7 @@
 # Nanosensor-Brain-Imaging
 MATLAB code for processing brain tissue imaging data and measuring fluorescent response of nanosensors
 
-# File List:
+## File List:
 
 `analyzeROIs.m` - Main function for bulk processing a folder containing either ".tif" or ".spe" image stacks. 
 
@@ -22,7 +22,7 @@ frameRate - Enter framerate in units of frames/second
 
 ---
 
-# Legal
+## Legal
 `SpeReader.m`
 
 Copyright (c) 2013, W. Jansen 
