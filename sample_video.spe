@@ -206,18 +206,6 @@ end
 
 function [baseCorrectedSignal]=correctBaseline(signal)
 
-signal = samplevideo(8,:)
-smoothedSignal = smooth(signal);
-smoothedSignal = smoothedSignal';
-x=1:length(smoothedSignal);
-p = polyfit(x,smoothedSignal,3);
-y1 = polyval(p,x);
-subplot(121)
-plot(x,signal), hold on
-plot(x,smoothedSignal);
-plot(x,y1);
-subplot(122)
-plot(x,signal./y1);
 
 
 end
