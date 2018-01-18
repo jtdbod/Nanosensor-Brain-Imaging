@@ -202,65 +202,23 @@ function []=correctMotion(imagestack)
 
     
 end
+end
+
+function [baseCorrectedSignal]=correctBaseline(signal)
+
+signal = samplevideo(8,:)
+smoothedSignal = smooth(signal);
+smoothedSignal = smoothedSignal';
+x=1:length(smoothedSignal);
+p = polyfit(x,smoothedSignal,3);
+y1 = polyval(p,x);
+subplot(121)
+plot(x,signal), hold on
+plot(x,smoothedSignal);
+plot(x,y1);
+subplot(122)
+plot(x,signal./y1);
 
 
 end
-%%
-function []=filterTrace()
-frameRate=1/6.9;
-    x=data(9,:)-mean(data(9,:))
-    a=(1/frameRate)/(1/5);
-y = filter(a, [1 a-1], x);
-plot(x), hold on, plot(y)
-end
-%}
 
-%{
-X=data(9,:);
-Fs=1/6.9;
-L=length(X);
-Y = fft(X);
-P2 = abs(Y/L);
-P1 = P2(1:L/2+1);
-P1(2:end-1) = 2*P1(2:end-1);
-f = Fs*(0:(L/2))/L;
-plot(f,P1) 
-title('Single-Sided Amplitude Spectrum of X(t)')
-xlabel('f (Hz)')
-ylabel('|P1(f)|')
-%}
-
-%{
-Fish image processing
-files=dir('*.csv');
-time=1:600;
-time=time*(1/6.92);
-for file=1:size(files,1)
-    filename=files(file).name;
-    data=csvread(filename,1,0);
-    traces=data(:,3:4:end);
-    ntraces=[];
-    for i=1:size(traces,2)
-        ntraces(:,i)=traces(:,i)./max(traces(:,i));
-    end
-
-    for i=1:size(ntraces,2)
-        subplot(131)
-        plot(time,ntraces(:,i)+i)
-        hold on
-    end
-    subplot(132)
-    p = pdist(ntraces,'correlation');
-    d = squareform(p);
-    imagesc(d)
-    title('trace correlation')
-    subplot(133)
-    p = pdist(ntraces','correlation');
-    d = squareform(p);
-    imagesc(d)
-    title('roi correlation')
-    
-    savefig(filename(1:2));
-    close all
-end
-%}
