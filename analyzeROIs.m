@@ -29,6 +29,7 @@ for i=1:size(files,1)
             plotResults(mask,imagemed,measuredValues,frameRate);
             csvwrite(strcat(pwd,'/',filename(1:end-4),'.csv'),measuredValues);
             savefig(strcat(pwd,'/',filename(1:end-4)));
+            save(strcat(pwd,'/',filename(1:end-4),'.mat'),'mask','imagemed','measuredValues');
             clear imagestack Lmatrix mask imagemed measuredValues 
             close all
     end
@@ -143,7 +144,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate)
     end
         
     x = 1:size(traces,2);
-    x=x/frameRate;
+    x=x./frameRate;
     for trace=1:size(traces,1)
         %smoothed=smooth(traces(trace,:),'rloess');
         plot(x,traces(trace,:)+trace-1);

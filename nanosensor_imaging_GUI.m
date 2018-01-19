@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 18-Jan-2018 15:09:42
+% Last Modified by GUIDE v2.5 18-Jan-2018 17:41:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -73,43 +73,43 @@ function varargout = nanosensor_imaging_GUI_OutputFcn(hObject, eventdata, handle
 varargout{1} = handles.output;
 
 
-% --- Executes on button press in pushbutton4.
-function pushbutton4_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton4 (see GCBO)
+% --- Executes on button press in loadbutton.
+function loadbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to loadbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+[FileName,PathName,FilterINdex] = uigetfile();
+
+
+% --- Executes on button press in processfilebutton.
+function processfilebutton_Callback(hObject, eventdata, handles)
+% hObject    handle to processfilebutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton5.
-function pushbutton5_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton5 (see GCBO)
+% --- Executes on button press in batchprocessbutton.
+function batchprocessbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to batchprocessbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in pushbutton6.
-function pushbutton6_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton6 (see GCBO)
+% --- Executes on button press in driftcheck.
+function driftcheck_Callback(hObject, eventdata, handles)
+% hObject    handle to driftcheck (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% Hint: get(hObject,'Value') returns toggle state of driftcheck
 
-% --- Executes on button press in checkbox1.
-function checkbox1_Callback(hObject, eventdata, handles)
-% hObject    handle to checkbox1 (see GCBO)
+
+% --- Executes on button press in spikecheck.
+function spikecheck_Callback(hObject, eventdata, handles)
+% hObject    handle to spikecheck (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of checkbox1
-
-
-% --- Executes on button press in checkbox2.
-function checkbox2_Callback(hObject, eventdata, handles)
-% hObject    handle to checkbox2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of checkbox2
+% Hint: get(hObject,'Value') returns toggle state of spikecheck
 
 
 
@@ -136,18 +136,18 @@ end
 
 
 
-function edit3_Callback(hObject, eventdata, handles)
-% hObject    handle to edit3 (see GCBO)
+function enterframerate_Callback(hObject, eventdata, handles)
+% hObject    handle to enterframerate (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit3 as text
-%        str2double(get(hObject,'String')) returns contents of edit3 as a double
+% Hints: get(hObject,'String') returns contents of enterframerate as text
+%        str2double(get(hObject,'String')) returns contents of enterframerate as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit3 (see GCBO)
+function enterframerate_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to enterframerate (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -181,8 +181,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in pushbutton7.
-function pushbutton7_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton7 (see GCBO)
+% --- Executes on button press in savedatabutton.
+function savedatabutton_Callback(hObject, eventdata, handles)
+% hObject    handle to savedatabutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
