@@ -21,7 +21,9 @@ frameRate - Enter framerate in units of frames/second
 `git.m` - Wrapper for using git within MATLAB console. Obtained from the Mathworks File Exchange
 
 ---
+![picture](screenshot.png)
 
+---
 ## Legal
 `SpeReader.m`
 
