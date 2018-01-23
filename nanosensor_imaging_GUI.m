@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 19-Jan-2018 13:38:06
+% Last Modified by GUIDE v2.5 23-Jan-2018 07:24:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -71,9 +71,6 @@ function varargout = nanosensor_imaging_GUI_OutputFcn(hObject, eventdata, handle
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
-
-
-
 
 % --- Executes on button press in loadbutton.
 function loadbutton_Callback(hObject, eventdata, handles)
@@ -132,22 +129,17 @@ axes(handles.axes3)
 
 set(handles.CurrentFileLoaded,'String',FileName);
 
-
-
-
 % --- Executes on button press in processfilebutton.
 function processfilebutton_Callback(hObject, eventdata, handles)
 % hObject    handle to processfilebutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --- Executes on button press in batchprocessbutton.
 function batchprocessbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to batchprocessbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 
 % --- Executes on button press in driftcheck.
 function driftcheck_Callback(hObject, eventdata, handles)
@@ -157,7 +149,6 @@ function driftcheck_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of driftcheck
 
-
 % --- Executes on button press in spikecheck.
 function spikecheck_Callback(hObject, eventdata, handles)
 % hObject    handle to spikecheck (see GCBO)
@@ -166,8 +157,6 @@ function spikecheck_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of spikecheck
 
-
-
 function edit2_Callback(hObject, eventdata, handles)
 % hObject    handle to edit2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -175,7 +164,6 @@ function edit2_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit2 as text
 %        str2double(get(hObject,'String')) returns contents of edit2 as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function edit2_CreateFcn(hObject, eventdata, handles)
@@ -188,8 +176,6 @@ function edit2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
 
 function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
 % hObject    handle to enterframerate (see GCBO)
@@ -229,7 +215,6 @@ function edit4_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit4 as text
 %        str2double(get(hObject,'String')) returns contents of edit4 as a double
 
-
 % --- Executes during object creation, after setting all properties.
 function edit4_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit4 (see GCBO)
@@ -242,13 +227,11 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on button press in savedatabutton.
 function savedatabutton_Callback(hObject, eventdata, handles)
 % hObject    handle to savedatabutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 
 % --- Executes during object creation, after setting all properties.
 function CurrentFileLoaded_CreateFcn(hObject, eventdata, handles)
@@ -256,4 +239,46 @@ function CurrentFileLoaded_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-%set(FileName,'string',t)
+
+% --- Executes on slider movement.
+function strelSlider_Callback(hObject, eventdata, handles)
+% hObject    handle to strelSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function strelSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to strelSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+% --- Executes on slider movement.
+function slider4_Callback(hObject, eventdata, handles)
+% hObject    handle to slider4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function slider4_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
