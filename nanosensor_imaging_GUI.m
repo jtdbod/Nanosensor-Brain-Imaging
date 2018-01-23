@@ -73,6 +73,8 @@ function varargout = nanosensor_imaging_GUI_OutputFcn(hObject, eventdata, handle
 varargout{1} = handles.output;
 
 
+
+
 % --- Executes on button press in loadbutton.
 function loadbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to loadbutton (see GCBO)
@@ -81,11 +83,13 @@ function loadbutton_Callback(hObject, eventdata, handles)
 %Load file
 [FileName,PathName,FilterINdex] = uigetfile();
 handles.dataset = load(strcat(PathName,'/',FileName));
-set(handles.CurrentFileLoaded, 'String', FileName);
+frameRate=str2double(get(handles.enterframerate,'String'));
+%CurrentFileLoaded();
+%set(handles.CurrentFileLoaded, 'String', FileName);
 
 %Plot file
 
-subplot(131)
+axes(handles.axes1)
     [B,L,N,A] = bwboundaries(handles.dataset.mask,'noholes');
     imagesc(handles.dataset.imagemed); hold on;
     colors=['b' 'g' 'r' 'c' 'm' 'y'];
@@ -101,7 +105,7 @@ subplot(131)
       h = text(col+1, row-1, num2str(L(row,col)));
       set(h,'Color',colors(cidx),'FontSize',14);
     end
-    subplot(132)
+axes(handles.axes2)
     for tracenum=1:size(handles.dataset.measuredValues,1)
         %%%%NEED TO WORK ON THIS BASELINE CORRECTION AND NORMALIZATION
         signal = handles.dataset.measuredValues(tracenum,:)+abs(min(handles.dataset.measuredValues(tracenum,:)));
@@ -110,7 +114,7 @@ subplot(131)
     end
         
     x = 1:size(traces,2);
-    x=x./handles.frameRate;
+    x=x./frameRate;
     for trace=1:size(traces,1)
         %smoothed=smooth(traces(trace,:),'rloess');
         plot(x,traces(trace,:)+trace-1);
@@ -121,11 +125,12 @@ subplot(131)
     xlabel('Time (s)')
     ylabel('Normalized Intensity (a.u.)')
     
-    subplot(133)
+axes(handles.axes3)
     imagesc(traces)
     ylabel('ROI#');
     xlabel('Time (s)');
 
+set(handles.CurrentFileLoaded,'String',FileName);
 
 
 
@@ -186,16 +191,15 @@ end
 
 
 
-function enterframerate_Callback(hObject, eventdata, handles)
+function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
 % hObject    handle to enterframerate (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'String') returns contents of enterframerate as text
 %        str2double(get(hObject,'String')) returns contents of enterframerate as a double
-
 frameRate = get(hObject,'String');
-handles.frameRate = str2double(frameRate);
+frameRate = str2double(frameRate);
 
 % --- Executes during object creation, after setting all properties.
 function enterframerate_CreateFcn(hObject, eventdata, handles)
@@ -208,9 +212,14 @@ function enterframerate_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+set(hObject,'String','6.92');
+input = str2double(get(hObject,'String'));
+if isnan(input)
+  errordlg('You must enter a numeric value','Invalid Input','modal')
+  uicontrol(hObject)
+  return
 
-frameRate = get(hObject,'String');
-handles.frameRate = str2double(frameRate);
+end
 
 function edit4_Callback(hObject, eventdata, handles)
 % hObject    handle to edit4 (see GCBO)
@@ -246,3 +255,5 @@ function CurrentFileLoaded_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to CurrentFileLoaded (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+
+%set(FileName,'string',t)
