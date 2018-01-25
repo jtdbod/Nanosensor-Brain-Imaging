@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 23-Jan-2018 07:24:48
+% Last Modified by GUIDE v2.5 23-Jan-2018 15:07:30
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -140,6 +140,13 @@ function batchprocessbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to batchprocessbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+frameRate=str2double(get(handles.enterframerate,'String'));
+if true(get(handles.radiobuttonSPE,'Value'))
+    fileType = 'spe';
+elseif true(get(handles.radiobuttonTIF,'Value'))
+    fileType = 'tif';
+end
+batchProcessVideos(fileType,frameRate);
 
 % --- Executes on button press in driftcheck.
 function driftcheck_Callback(hObject, eventdata, handles)
@@ -282,3 +289,21 @@ function slider4_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
+% --- Executes on button press in radiobuttonSPE.
+function radiobuttonSPE_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobuttonSPE (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobuttonSPE
+
+
+% --- Executes on button press in radiobuttonTIF.
+function radiobuttonTIF_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobuttonTIF (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobuttonTIF

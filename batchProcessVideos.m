@@ -1,44 +1,3 @@
-function []=analyzeROIs(filetype,frameRate);
-clearvars -except filetype frameRate
-if strmatch(filetype,'spe');
-    files=dir('*.spe');
-elseif strmatch(filetype,'tif');
-    files=dir('*.tif');
-else 
-    error('Error. Filetype must be "tif" or "spe"');
-end
-
-for i=1:size(files,1)
-    fprintf(1,'Processing file %d of %d',[i size(files,1)])
-    if strmatch(filetype,'spe')
-        %Make progress bar
-        barhandle = waitbar(0,'1','Name','Processing frame: ',...
-                'CreateCancelBtn',...
-                'setappdata(gcbf,''canceling'',1)');
-    setappdata(barhandle,'canceling',0)
-        [imagestack,filename]=loadIMstackSPE(files,i,barhandle);
-    elseif strmatch(filetype,'tif')
-        [imagestack,filename]=loadIMstackTIF(files,i);
-    else
-        error('Error. Filetype must be "tif" or "spe"');
-    end
-
-        [Lmatrix,mask,imagemed]=processImage(imagestack);
-        [measuredValues]=processROI(imagestack,Lmatrix);
-        if isempty(measuredValues)
-            %do nothing
-        else
-            plotResults(mask,imagemed,measuredValues,frameRate);
-            csvwrite(strcat(pwd,'/',filename(1:end-4),'.csv'),measuredValues);
-            savefig(strcat(pwd,'/',filename(1:end-4)));
-            save(strcat(pwd,'/',filename(1:end-4),'.mat'),'mask','imagemed','measuredValues');
-            clear imagestack Lmatrix mask imagemed measuredValues 
-            close all
-    end
-end
-
-end
-
 function batchProcessVideos(filetype,frameRate)
 clearvars -except filetype frameRate
 if strmatch(filetype,'spe');
@@ -59,13 +18,18 @@ for i=1:size(files,1)
         setappdata(barhandle,'canceling',0)
         [imagestack,filename]=loadIMstackSPE(files,i,barhandle);
     elseif strmatch(filetype,'tif')
+        %Make progress bar
+        barhandle = waitbar(0,'1','Name',sprintf('Processing File %s of %s',num2str(i),num2str(size(files,1))),...
+                'CreateCancelBtn',...
+                'setappdata(gcbf,''canceling'',1)');
+        setappdata(barhandle,'canceling',0)
         [imagestack,filename]=loadIMstackTIF(files,i,barhandle);
     else
         error('Error. Filetype must be "tif" or "spe"');
     end
 
         [Lmatrix,mask,imagemed]=processImage(imagestack);
-        [measuredValues]=processROI(imagestack,Lmatrix);
+        [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
         if isempty(measuredValues)
             %do nothing
         else
@@ -77,6 +41,8 @@ for i=1:size(files,1)
             close all
     end
 end
+
+delete(findall(0,'Type','Figure'))
 
 end
 
@@ -109,7 +75,7 @@ function [imagestack,filename]=loadIMstackSPE(files,i,h) %Load image stacks into
         end
         
         %Update progress bar
-        waitbar(j/frames,h,sprintf('%i of %i',[j,frames]));
+        waitbar(j/frames,h,sprintf('Loading frame %i of %i',[j,frames]));
         
     end
         
@@ -117,7 +83,7 @@ function [imagestack,filename]=loadIMstackSPE(files,i,h) %Load image stacks into
     fprintf('\n')
 end
 
-function [imagestack,filename]=loadIMstackTIF(files,i) %Load image stacks into variable "imagestack"
+function [imagestack,filename]=loadIMstackTIF(files,i,h) %Load image stacks into variable "imagestack"
     
     fprintf(1,'\n\tLoading frame:\t');
     filename=files(i).name;
@@ -132,6 +98,14 @@ function [imagestack,filename]=loadIMstackTIF(files,i) %Load image stacks into v
         imagestack(:,:,j)=imread(filename,j);   
         fprintf(1,'%d',j)
         fprintf(1,repmat('\b',1,length(num2str(j))))
+                % Check for Cancel button press
+        if getappdata(h,'canceling')
+            delete(h)
+            error('Operation terminated by user');
+        end
+        
+        %Update progress bar
+        waitbar(j/frames,h,sprintf('Loading frame %i of %i',[j,frames]));
         
     end
     fprintf(1,'%d',j)
@@ -152,12 +126,21 @@ function [Lmatrix,mask,imagemed]=processImage(imagestack)
     Lmatrix = labelmatrix(CC);
 end
 
-function [measuredValues]=processROI(imagestack,Lmatrix)   
+function [measuredValues]=processROI(imagestack,Lmatrix,h)   
     frames=size(imagestack,3);
     measuredValues = zeros(max(Lmatrix(:)),frames);
     measuredAreas = zeros(max(Lmatrix(:)),frames);
     fprintf(1,'\tCalculating traces (frame):\t')
     for frame = 1:frames
+        % Check for Cancel button press
+        if getappdata(h,'canceling')
+            delete(h)
+            error('Operation terminated by user');
+        end
+        
+        %Update progress bar
+        waitbar(frame/frames,h,sprintf('ROI processing. Frame %i of %i',[frame,frames]));
+        
         %background = mean2(imagestack(:,:,frame));
         %background = mean(background);
         %background = mean(imagestack(:)); %this is a test
@@ -276,5 +259,4 @@ plot(x,signal./y1);
 
 
 end
-
 
