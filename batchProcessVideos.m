@@ -28,17 +28,17 @@ for i=1:size(files,1)
         error('Error. Filetype must be "tif" or "spe"');
     end
 
-        [Lmatrix,mask,imagemed]=processImage(imagestack);
-        [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
-        if isempty(measuredValues)
-            %do nothing
-        else
-            plotResults(mask,imagemed,measuredValues,frameRate);
-            csvwrite(strcat(pwd,'/',filename(1:end-4),'.csv'),measuredValues);
-            savefig(strcat(pwd,'/',filename(1:end-4)));
-            save(strcat(pwd,'/',filename(1:end-4),'.mat'),'mask','imagemed','measuredValues');
-            clear imagestack Lmatrix mask imagemed measuredValues 
-            close all
+    [Lmatrix,mask,imagemed]=processImage(imagestack);
+    [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
+    if isempty(measuredValues)
+        %do nothing
+    else
+        plotResults(mask,imagemed,measuredValues,frameRate);
+        csvwrite(strcat(pwd,'/',filename(1:end-4),'.csv'),measuredValues);
+        savefig(strcat(pwd,'/',filename(1:end-4)));
+        save(strcat(pwd,'/',filename(1:end-4),'.mat'),'mask','imagemed','measuredValues');
+        clear imagestack Lmatrix mask imagemed measuredValues 
+        close all
     end
 end
 

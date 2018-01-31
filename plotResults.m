@@ -1,4 +1,5 @@
 function []=plotResults(mask,imagemed,measuredValues,frameRate)
+    figure(1)
     subplot(131)
     [B,L,N,A] = bwboundaries(mask,'noholes');
     imagesc(imagemed); hold on;

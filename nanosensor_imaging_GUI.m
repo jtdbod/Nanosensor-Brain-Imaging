@@ -78,7 +78,7 @@ function loadbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 
 %Load file
-[FileName,PathName,FilterINdex] = uigetfile();
+[FileName,PathName,FilterINdex] = uigetfile('*.mat');
 handles.dataset = load(strcat(PathName,'/',FileName));
 frameRate=str2double(get(handles.enterframerate,'String'));
 %CurrentFileLoaded();
@@ -134,6 +134,49 @@ function processfilebutton_Callback(hObject, eventdata, handles)
 % hObject    handle to processfilebutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+frameRate=str2double(get(handles.enterframerate,'String'));
+if true(get(handles.radiobuttonSPE,'Value'))
+    fileType = 'spe';
+elseif true(get(handles.radiobuttonTIF,'Value'))
+    fileType = 'tif';
+end
+[FileName,PathName,FilterIndex] = uigetfile(strcat('*.',fileType))
+file.name = strcat(PathName,'/',FileName);
+fprintf(1,'Processing file ')
+    if strmatch(fileType,'spe')
+        %Make progress bar
+        barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File 1 of 1'),...
+                'CreateCancelBtn',...
+                'setappdata(gcbf,''canceling'',1)');
+        setappdata(barhandle,'canceling',0)
+        
+        [imagestack,filename]=loadIMstackSPE(file,1,barhandle);
+    elseif strmatch(fileType,'tif')
+        %Make progress bar
+        barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
+                'CreateCancelBtn',...
+                'setappdata(gcbf,''canceling'',1)');
+        setappdata(barhandle,'canceling',0)
+        
+        [imagestack,filename]=loadIMstackTIF(file,1,barhandle);
+    else
+        error('Error. Filetype must be "tif" or "spe"');
+    end
+
+        [Lmatrix,mask,imagemed]=processImage(imagestack);
+        [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
+        if isempty(measuredValues)
+            %do nothing
+        else
+            plotResults(mask,imagemed,measuredValues,frameRate);
+            csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
+            savefig(strcat(PathName,'/',FileName(1:end-4)));
+            save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'mask','imagemed','measuredValues');
+            clear imagestack Lmatrix mask imagemed measuredValues 
+            close all
+    end
+
 
 % --- Executes on button press in batchprocessbutton.
 function batchprocessbutton_Callback(hObject, eventdata, handles)
