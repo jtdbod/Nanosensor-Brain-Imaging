@@ -3,6 +3,14 @@ Nanosensor-Brain-Imaging is a suite of MATLAB code designed specifically for pro
 
 ## File List:
 
+New for version 0.2!
+
+`nanosensor_imaging_GUI.m` - Introduces a convenient GUI frontend for processing single files, batch processing folders, loading processed datasets (`*.mat` files) and plotting single ROI traces by clicking on the image.
+
+Detailed README updates coming soon!
+
+---
+
 `analyzeROIs.m` - Main function for bulk processing a folder containing either ".tif" or ".spe" image stacks. 
 
 Useage:
