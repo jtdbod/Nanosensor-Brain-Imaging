@@ -37,7 +37,9 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate)
     ylabel('Normalized Intensity (a.u.)')
     
     subplot(133)
-    imagesc(traces)
+    x=x;
+    y=1:size(traces,1);
+    imagesc(x,y,traces)
     ylabel('ROI#');
     xlabel('Time (s)');
 end

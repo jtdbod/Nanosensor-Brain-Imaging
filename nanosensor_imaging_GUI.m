@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 23-Jan-2018 15:07:30
+% Last Modified by GUIDE v2.5 01-Feb-2018 08:28:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -78,8 +78,9 @@ function loadbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 
 %Load file
-[FileName,PathName,FilterINdex] = uigetfile('*.mat');
+[FileName,PathName,FilterIndex] = uigetfile('*.mat');
 handles.dataset = load(strcat(PathName,'/',FileName));
+guidata(hObject,handles);%To save dataset to handles
 frameRate=str2double(get(handles.enterframerate,'String'));
 %CurrentFileLoaded();
 %set(handles.CurrentFileLoaded, 'String', FileName);
@@ -123,7 +124,12 @@ axes(handles.axes2)
     ylabel('Normalized Intensity (a.u.)')
     
 axes(handles.axes3)
-    imagesc(traces)
+    
+    x=1:size(handles.dataset.measuredValues,2);
+    frameRate=str2double(get(handles.enterframerate,'String'));
+    x=x./frameRate;
+    y=1:size(traces,1);
+    imagesc(x,y,traces)
     ylabel('ROI#');
     xlabel('Time (s)');
 
@@ -172,9 +178,10 @@ fprintf(1,'Processing file ')
             plotResults(mask,imagemed,measuredValues,frameRate);
             csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
             savefig(strcat(PathName,'/',FileName(1:end-4)));
-            save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'mask','imagemed','measuredValues');
+            save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
             clear imagestack Lmatrix mask imagemed measuredValues 
-            close all
+            
+            delete(barhandle);
     end
 
 
@@ -350,3 +357,28 @@ function radiobuttonTIF_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of radiobuttonTIF
+
+
+% --- Executes on button press in selectROI.
+function selectROI_Callback(hObject, eventdata, handles)
+% hObject    handle to selectROI (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+axes(handles.axes1);
+roicoordinates=ginput(1);
+d=[floor(roicoordinates(1)),floor(roicoordinates(2))];
+selectedROI=handles.dataset.Lmatrix(d(2),d(1));
+    if selectedROI == 0
+        return
+    else
+    axes(handles.axes2);
+    hold off
+    x=1:size(handles.dataset.measuredValues,2);
+    frameRate=str2double(get(handles.enterframerate,'String'));
+    x=x./frameRate;
+    plot(x,handles.dataset.measuredValues(selectedROI,:));
+    xlabel('Time (s)');
+    title(sprintf('ROI: %s',num2str(selectedROI)));
+end
+
+
