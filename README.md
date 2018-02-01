@@ -10,6 +10,9 @@ New for version 0.2!
 Detailed README updates coming soon!
 
 ---
+![picture](screenshot.png)
+
+---
 
 `analyzeROIs.m` - Main function for bulk processing a folder containing either ".tif" or ".spe" image stacks. 
 
@@ -28,8 +31,7 @@ frameRate - Enter framerate in units of frames/second
 
 `git.m` - Wrapper for using git within MATLAB console. Obtained from the Mathworks File Exchange
 
----
-![picture](screenshot.png)
+
 
 ---
 ## Legal
