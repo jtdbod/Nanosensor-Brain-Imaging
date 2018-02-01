@@ -8,13 +8,15 @@ else
     error('Error. Filetype must be "tif" or "spe"');
 end
 
-
-%frameRate=6.92; %frames/s
-
 for i=1:size(files,1)
     fprintf(1,'Processing file %d of %d',[i size(files,1)])
     if strmatch(filetype,'spe')
-        [imagestack,filename]=loadIMstackSPE(files,i);
+        %Make progress bar
+        barhandle = waitbar(0,'1','Name','Processing frame: ',...
+                'CreateCancelBtn',...
+                'setappdata(gcbf,''canceling'',1)');
+    setappdata(barhandle,'canceling',0)
+        [imagestack,filename]=loadIMstackSPE(files,i,barhandle);
     elseif strmatch(filetype,'tif')
         [imagestack,filename]=loadIMstackTIF(files,i);
     else
@@ -29,14 +31,58 @@ for i=1:size(files,1)
             plotResults(mask,imagemed,measuredValues,frameRate);
             csvwrite(strcat(pwd,'/',filename(1:end-4),'.csv'),measuredValues);
             savefig(strcat(pwd,'/',filename(1:end-4)));
+            save(strcat(pwd,'/',filename(1:end-4),'.mat'),'mask','imagemed','measuredValues');
             clear imagestack Lmatrix mask imagemed measuredValues 
             close all
     end
 end
 
+end
+
+function batchProcessVideos(filetype,frameRate)
+clearvars -except filetype frameRate
+if strmatch(filetype,'spe');
+    files=dir('*.spe');
+elseif strmatch(filetype,'tif');
+    files=dir('*.tif');
+else 
+    error('Error. Filetype must be "tif" or "spe"');
+end
+
+for i=1:size(files,1)
+    fprintf(1,'Processing file %d of %d',[i size(files,1)])
+    if strmatch(filetype,'spe')
+        %Make progress bar
+        barhandle = waitbar(0,'1','Name',sprintf('Processing File %s of %s',num2str(i),num2str(size(files,1))),...
+                'CreateCancelBtn',...
+                'setappdata(gcbf,''canceling'',1)');
+        setappdata(barhandle,'canceling',0)
+        [imagestack,filename]=loadIMstackSPE(files,i,barhandle);
+    elseif strmatch(filetype,'tif')
+        [imagestack,filename]=loadIMstackTIF(files,i,barhandle);
+    else
+        error('Error. Filetype must be "tif" or "spe"');
+    end
+
+        [Lmatrix,mask,imagemed]=processImage(imagestack);
+        [measuredValues]=processROI(imagestack,Lmatrix);
+        if isempty(measuredValues)
+            %do nothing
+        else
+            plotResults(mask,imagemed,measuredValues,frameRate);
+            csvwrite(strcat(pwd,'/',filename(1:end-4),'.csv'),measuredValues);
+            savefig(strcat(pwd,'/',filename(1:end-4)));
+            save(strcat(pwd,'/',filename(1:end-4),'.mat'),'mask','imagemed','measuredValues');
+            clear imagestack Lmatrix mask imagemed measuredValues 
+            close all
+    end
+end
+
+end
+
 %Functions defined below
 
-function [imagestack,filename]=loadIMstackSPE(files,i) %Load image stacks into variable "imagestack"
+function [imagestack,filename]=loadIMstackSPE(files,i,h) %Load image stacks into variable "imagestack"
     
     fprintf(1,'\n\tLoading frame:\t');
     filename=files(i).name;
@@ -45,17 +91,28 @@ function [imagestack,filename]=loadIMstackSPE(files,i) %Load image stacks into v
     height=size(vidFrames,1);
     width=size(vidFrames,2);   
     frames=size(vidFrames,4);
-    
-    
+     
     imagestack=zeros(height,width,frames);
 
+
+    
     for j=1:frames
 
         imagestack(:,:,j)=vidFrames(:,:,1,j);
         fprintf(1,'%d',j)
         fprintf(1,repmat('\b',1,length(num2str(j))))
+
+        % Check for Cancel button press
+        if getappdata(h,'canceling')
+            delete(h)
+            error('Operation terminated by user');
+        end
+        
+        %Update progress bar
+        waitbar(j/frames,h,sprintf('%i of %i',[j,frames]));
         
     end
+        
     fprintf(1,'%d',j)
     fprintf('\n')
 end
@@ -143,7 +200,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate)
     end
         
     x = 1:size(traces,2);
-    x=x/frameRate;
+    x=x./frameRate;
     for trace=1:size(traces,1)
         %smoothed=smooth(traces(trace,:),'rloess');
         plot(x,traces(trace,:)+trace-1);
@@ -199,10 +256,8 @@ function []=correctMotion(imagestack)
         
     end
     
+end
 
-    
-end
-end
 
 function [baseCorrectedSignal]=correctBaseline(signal)
 
@@ -221,4 +276,5 @@ plot(x,signal./y1);
 
 
 end
+
 

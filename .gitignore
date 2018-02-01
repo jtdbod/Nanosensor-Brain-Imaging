@@ -1,4 +1,5 @@
-
+*.mat
 sample_video\.fig
 
 sample_video\.spe
+*~

@@ -1,5 +1,5 @@
 # Nanosensor-Brain-Imaging
-MATLAB code for processing brain tissue imaging data and measuring fluorescent response of nanosensors
+Nanosensor-Brain-Imaging is a suite of MATLAB code designed specifically for processing brain tissue imaging data and quantifying the fluorescent response of infrared fluorescent nanosensors.
 
 ## File List:
 
