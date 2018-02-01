@@ -10,7 +10,7 @@ New for version 0.2!
 Detailed README updates coming soon!
 
 ---
-![picture](screenshot.png)
+![picture](screenshot_gui.png)
 
 ---
 
