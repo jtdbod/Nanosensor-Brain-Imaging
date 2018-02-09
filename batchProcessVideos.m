@@ -37,9 +37,9 @@ for i=1:size(files,1)
         %do nothing
     else
         plotResults(mask,imagemed,measuredValues,frameRate);
-        csvwrite(strcat(pwd,'/',filename(1:end-4),'.csv'),measuredValues);
-        savefig(strcat(pwd,'/',filename(1:end-4)));
-        save(strcat(pwd,'/',filename(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
+        csvwrite(strcat(folder,'/',filename(1:end-4),'.csv'),measuredValues);
+        savefig(strcat(folder,'/',filename(1:end-4)));
+        save(strcat(folder,'/',filename(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
         clear imagestack Lmatrix mask imagemed measuredValues 
         close all
     end
