@@ -1,9 +1,12 @@
 function batchProcessVideos(filetype,frameRate)
 clearvars -except filetype frameRate
-if strmatch(filetype,'spe');
-    files=dir('*.spe');
-elseif strmatch(filetype,'tif');
-    files=dir('*.tif');
+
+if strmatch(filetype,'spe')
+    folder = uigetdir();
+    files=dir(strcat(folder,'/','*.spe'));
+elseif strmatch(filetype,'tif')
+    folder = uigetdir();
+    files=dir(strcat(folder,'/','*.tif'));
 else 
     error('Error. Filetype must be "tif" or "spe"');
 end
@@ -16,7 +19,7 @@ for i=1:size(files,1)
                 'CreateCancelBtn',...
                 'setappdata(gcbf,''canceling'',1)');
         setappdata(barhandle,'canceling',0)
-        [imagestack,filename]=loadIMstackSPE(files,i,barhandle);
+        [imagestack,filename]=loadIMstackSPE(folder,files,i,barhandle);
     elseif strmatch(filetype,'tif')
         %Make progress bar
         barhandle = waitbar(0,'1','Name',sprintf('Processing File %s of %s',num2str(i),num2str(size(files,1))),...
@@ -36,7 +39,7 @@ for i=1:size(files,1)
         plotResults(mask,imagemed,measuredValues,frameRate);
         csvwrite(strcat(pwd,'/',filename(1:end-4),'.csv'),measuredValues);
         savefig(strcat(pwd,'/',filename(1:end-4)));
-        save(strcat(pwd,'/',filename(1:end-4),'.mat'),'mask','imagemed','measuredValues');
+        save(strcat(pwd,'/',filename(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
         clear imagestack Lmatrix mask imagemed measuredValues 
         close all
     end
