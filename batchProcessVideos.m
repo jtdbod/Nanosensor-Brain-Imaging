@@ -1,9 +1,12 @@
 function batchProcessVideos(filetype,frameRate)
 clearvars -except filetype frameRate
-if strmatch(filetype,'spe');
-    files=dir('*.spe');
-elseif strmatch(filetype,'tif');
-    files=dir('*.tif');
+
+if strmatch(filetype,'spe')
+    folder = uigetdir();
+    files=dir(strcat(folder,'/','*.spe'));
+elseif strmatch(filetype,'tif')
+    folder = uigetdir();
+    files=dir(strcat(folder,'/','*.tif'));
 else 
     error('Error. Filetype must be "tif" or "spe"');
 end
