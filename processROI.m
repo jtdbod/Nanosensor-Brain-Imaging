@@ -3,6 +3,7 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h)
     measuredValues = zeros(max(Lmatrix(:)),frames);
     measuredAreas = zeros(max(Lmatrix(:)),frames);
     fprintf(1,'\tCalculating traces (frame):\t')
+    dataResults=struct('MeanItensity',[zeros(length(frames))],'RoiArea',[],'dF',[zeros(length(frames))]);
     for frame = 1:frames
         % Check for Cancel button press
         if getappdata(h,'canceling')
@@ -22,9 +23,15 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h)
         measuredValues(:,frame)=[stats.MeanIntensity];
         %measuredValues.dF
         measuredAreas(:,frame)=[stats.Area];
-        fprintf(1,'%d',frame)
-        fprintf(1,repmat('\b',1,length(num2str(frame))))
+        %fprintf(1,'%d',frame)
+        %fprintf(1,repmat('\b',1,length(num2str(frame))))
         
+        %create data structure with ROI data including intensity, df/f,
+        %area etc.
+
+        %dataResults(totalROIs).MeanIntensity = [stats.MeanIntensity];
+        %dataResults(totalROIs).RoiArea = [stats.Area];
+        dataResults(totalROIs).
     end
     fprintf(1,'%d',frame)
     fprintf('\n')
