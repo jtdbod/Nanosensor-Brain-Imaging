@@ -1,8 +1,8 @@
-function [imagestack,filename]=loadIMstackSPE(folder,files,i,h) %Load image stacks into variable "imagestack"
+function [imagestack,filename]=loadIMstackSPE(files,i,h) %Load image stacks into variable "imagestack"
     
     fprintf(1,'\n\tLoading frame:\t');
     filename=files(i).name;
-    readerobj=SpeReader(strcat(folder,'/',files(i).name));
+    readerobj=SpeReader(files(i).name);
     vidFrames=read(readerobj);
     height=size(vidFrames,1);
     width=size(vidFrames,2);   

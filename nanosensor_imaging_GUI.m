@@ -147,43 +147,45 @@ if true(get(handles.radiobuttonSPE,'Value'))
 elseif true(get(handles.radiobuttonTIF,'Value'))
     fileType = 'tif';
 end
-[FileName,PathName,FilterIndex] = uigetfile(strcat('*.',fileType))
-file.name = strcat(PathName,'/',FileName);
-fprintf(1,'Processing file ')
-    if strmatch(fileType,'spe')
-        %Make progress bar
-        barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File 1 of 1'),...
-                'CreateCancelBtn',...
-                'setappdata(gcbf,''canceling'',1)');
-        setappdata(barhandle,'canceling',0)
-        
-        [imagestack,filename]=loadIMstackSPE(file,1,barhandle);
-    elseif strmatch(fileType,'tif')
-        %Make progress bar
-        barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
-                'CreateCancelBtn',...
-                'setappdata(gcbf,''canceling'',1)');
-        setappdata(barhandle,'canceling',0)
-        
-        [imagestack,filename]=loadIMstackTIF(file,1,barhandle);
-    else
-        error('Error. Filetype must be "tif" or "spe"');
-    end
+[FileName,PathName,FilterIndex] = uigetfile(strcat('*.',fileType));
+if true(FilterIndex)
+    file.name = strcat(PathName,'/',FileName);
+    fprintf(1,'Processing file ')
+        if strmatch(fileType,'spe')
+            %Make progress bar
+            barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File 1 of 1'),...
+                    'CreateCancelBtn',...
+                    'setappdata(gcbf,''canceling'',1)');
+            setappdata(barhandle,'canceling',0)
 
-        [Lmatrix,mask,imagemed]=processImage(imagestack);
-        [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
-        if isempty(measuredValues)
-            %do nothing
+            [imagestack,filename]=loadIMstackSPE(file,1,barhandle);
+        elseif strmatch(fileType,'tif')
+            %Make progress bar
+            barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
+                    'CreateCancelBtn',...
+                    'setappdata(gcbf,''canceling'',1)');
+            setappdata(barhandle,'canceling',0)
+
+            [imagestack,filename]=loadIMstackTIF(file,1,barhandle);
         else
-            plotResults(mask,imagemed,measuredValues,frameRate);
-            csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
-            savefig(strcat(PathName,'/',FileName(1:end-4)));
-            save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
-            clear imagestack Lmatrix mask imagemed measuredValues 
-            
-            delete(barhandle);
-    end
+            error('Error. Filetype must be "tif" or "spe"');
+        end
 
+            [Lmatrix,mask,imagemed]=processImage(imagestack);
+            [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
+            if isempty(measuredValues)
+                %do nothing
+                delete(barhandle);
+            else
+                plotResults(mask,imagemed,measuredValues,frameRate);
+                csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
+                savefig(strcat(PathName,'/',FileName(1:end-4)));
+                save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
+                clear imagestack Lmatrix mask imagemed measuredValues 
+
+                delete(barhandle);
+        end
+end
 
 % --- Executes on button press in batchprocessbutton.
 function batchprocessbutton_Callback(hObject, eventdata, handles)

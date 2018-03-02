@@ -20,6 +20,7 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h)
         image=imagestack(:,:,frame);
         stats=regionprops(Lmatrix,image,'MeanIntensity','Centroid','Area');
         measuredValues(:,frame)=[stats.MeanIntensity];
+        %measuredValues.dF
         measuredAreas(:,frame)=[stats.Area];
         fprintf(1,'%d',frame)
         fprintf(1,repmat('\b',1,length(num2str(frame))))
@@ -27,4 +28,5 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h)
     end
     fprintf(1,'%d',frame)
     fprintf('\n')
+    delete(h);
 end
