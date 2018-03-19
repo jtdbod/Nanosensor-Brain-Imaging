@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 01-Feb-2018 08:28:34
+% Last Modified by GUIDE v2.5 19-Mar-2018 11:01:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -106,7 +106,8 @@ axes(handles.axes1)
 axes(handles.axes2)
     for tracenum=1:size(handles.dataset.measuredValues,1)
         %%%%NEED TO WORK ON THIS BASELINE CORRECTION AND NORMALIZATION
-        signal = handles.dataset.measuredValues(tracenum,:)+abs(min(handles.dataset.measuredValues(tracenum,:)));
+        measuredValues=handles.dataset.measuredValues;
+        signal = measuredValues(tracenum).MeanIntensity+abs(min(measuredValues(tracenum).MeanIntensity));
         signal = signal./max(signal);
         traces(tracenum,:)=signal;
     end
@@ -134,6 +135,7 @@ axes(handles.axes3)
     xlabel('Time (s)');
 
 set(handles.CurrentFileLoaded,'String',FileName);
+assignin('base', 'measuredValues', measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
 
 % --- Executes on button press in processfilebutton.
 function processfilebutton_Callback(hObject, eventdata, handles)
@@ -178,7 +180,7 @@ if true(FilterIndex)
                 delete(barhandle);
             else
                 plotResults(mask,imagemed,measuredValues,frameRate);
-                csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
+                %csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
                 savefig(strcat(PathName,'/',FileName(1:end-4)));
                 save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
                 clear imagestack Lmatrix mask imagemed measuredValues 
@@ -375,12 +377,83 @@ selectedROI=handles.dataset.Lmatrix(d(2),d(1));
     else
     axes(handles.axes2);
     hold off
-    x=1:size(handles.dataset.measuredValues,2);
+    x=1:size(handles.dataset.measuredValues(selectedROI).MeanIntensity,2);
     frameRate=str2double(get(handles.enterframerate,'String'));
+    
     x=x./frameRate;
-    plot(x,handles.dataset.measuredValues(selectedROI,:));
+    plot(x,handles.dataset.measuredValues(selectedROI).dF);
     xlabel('Time (s)');
+    ylabel('dF/F')
     title(sprintf('ROI: %s',num2str(selectedROI)));
 end
 
 
+% --- Executes on button press in CloseAll.
+function CloseAll_Callback(hObject, eventdata, handles)
+% hObject    handle to CloseAll (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+delete(findall(0,'Type','Figure')) %Closes all open windows, including pesky waitbars
+
+
+% --- Executes on button press in plotHistogram.
+function plotHistogram_Callback(hObject, eventdata, handles)
+% hObject    handle to plotHistogram (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+for i=1:size(handles.dataset.measuredValues,2);
+    ROIsize(i) = handles.dataset.measuredValues(i).Area(1);
+end
+hist(ROIsize);
+xlabel('ROI size (pixels)')
+ylabel('Count')
+
+
+% --- Executes on button press in plotAlldF.
+function plotAlldF_Callback(hObject, eventdata, handles)
+% hObject    handle to plotAlldF (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+measuredValues=handles.dataset.measuredValues;
+axes(handles.axes2);
+hold off
+for i=1:size(measuredValues,2)
+    
+    plot(measuredValues(i).dF)
+    hold on
+    xlabel('Time (s)')
+    ylabel('dF/F')
+end
+
+
+% --- Executes on button press in CorrelationMatrix.
+function CorrelationMatrix_Callback(hObject, eventdata, handles)
+% hObject    handle to CorrelationMatrix (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+axes(handles.axes2);
+
+hold off
+data=handles.dataset.measuredValues;
+for rois=1:size(data,2)
+    allTraces(rois,:)=data(rois).dF;
+end
+R=corrcoef(allTraces');
+imagesc(R);
+
+
+% --------------------------------------------------------------------
+function edit_Callback(hObject, eventdata, handles)
+% hObject    handle to edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function copy_figure_Callback(hObject, eventdata, handles)
+% hObject    handle to copy_figure (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+print('-noui','-clipboard','-dpdf');

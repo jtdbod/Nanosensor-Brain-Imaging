@@ -19,7 +19,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate)
     subplot(132)
     for tracenum=1:size(measuredValues,1)
         %%%%NEED TO WORK ON THIS BASELINE CORRECTION AND NORMALIZATION
-        signal = measuredValues(tracenum,:)+abs(min(measuredValues(tracenum,:)));
+        signal = measuredValues(tracenum).MeanIntensity+abs(min(measuredValues(tracenum).MeanIntensity));
         signal = signal./max(signal);
         traces(tracenum,:)=signal;
     end
