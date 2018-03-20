@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 19-Mar-2018 11:01:10
+% Last Modified by GUIDE v2.5 19-Mar-2018 18:14:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -172,8 +172,9 @@ if true(FilterIndex)
         else
             error('Error. Filetype must be "tif" or "spe"');
         end
-
-            [Lmatrix,mask,imagemed]=processImage(imagestack);
+            strelsize=get(handles.strelSlider,'Value');
+            numopens=get(handles.numopens_slider,'Value');
+            [Lmatrix,mask,imagemed]=processImage(imagestack,strelsize,numopens);
             [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
             if isempty(measuredValues)
                 %do nothing
@@ -324,8 +325,8 @@ end
 
 
 % --- Executes on slider movement.
-function slider4_Callback(hObject, eventdata, handles)
-% hObject    handle to slider4 (see GCBO)
+function numopens_slider_Callback(hObject, eventdata, handles)
+% hObject    handle to numopens_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -334,8 +335,8 @@ function slider4_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function slider4_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider4 (see GCBO)
+function numopens_slider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to numopens_slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

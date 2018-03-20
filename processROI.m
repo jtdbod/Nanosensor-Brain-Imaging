@@ -20,12 +20,7 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h)
         %background = mean(imagestack(:)); %this is a test
         %image=imagestack(:,:,frame)-background;
         image=imagestack(:,:,frame);
-<<<<<<< HEAD
-        stats=regionprops(Lmatrix,image,'MeanIntensity','Centroid','Area');
-        measuredValues(:,frame)=[stats.MeanIntensity];
-        %measuredValues.dF
-        measuredAreas(:,frame)=[stats.Area];
-=======
+
         stats=regionprops(Lmatrix,image,'MeanIntensity','WeightedCentroid','Area');
         numROIs=length(stats);
         for j=1:numROIs
@@ -34,7 +29,7 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h)
             measuredValues(j).CenterX(frame)=stats(j).WeightedCentroid(1);
             measuredValues(j).CenterY(frame)=stats(j).WeightedCentroid(2);
         end
->>>>>>> 687f6addc424fea09dc1a6918d1b780ed58dafe3
+
         %fprintf(1,'%d',frame)
         %fprintf(1,repmat('\b',1,length(num2str(frame))))
         
@@ -43,7 +38,7 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h)
 
         %dataResults(totalROIs).MeanIntensity = [stats.MeanIntensity];
         %dataResults(totalROIs).RoiArea = [stats.Area];
-        dataResults(totalROIs).
+        %dataResults(totalROIs).
     end
     %fprintf(1,'%d',frame)
     %fprintf('\n')
