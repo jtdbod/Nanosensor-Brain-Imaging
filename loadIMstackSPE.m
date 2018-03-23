@@ -1,6 +1,6 @@
 function [imagestack,filename]=loadIMstackSPE(folder,files,i,h) %Load image stacks into variable "imagestack"
     
-    fprintf(1,'\n\tLoading frame:\t');
+
     filename=files(i).name;
     file=strcat(folder,'/',filename);
     readerobj=SpeReader(file);

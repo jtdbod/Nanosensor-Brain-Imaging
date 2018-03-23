@@ -1,6 +1,6 @@
 function [imagestack,filename]=loadIMstackTIF(files,i,h) %Load image stacks into variable "imagestack"
     
-    fprintf(1,'\n\tLoading frame:\t');
+
     filename=files(i).name;
     fileinfo=imfinfo(filename);
     height=fileinfo(1).Height;
@@ -23,6 +23,5 @@ function [imagestack,filename]=loadIMstackTIF(files,i,h) %Load image stacks into
         waitbar(j/frames,h,sprintf('Loading frame %i of %i',[j,frames]));
         
     end
-    fprintf(1,'%d',j)
-    fprintf('\n')
+
 end

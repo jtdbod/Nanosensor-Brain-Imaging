@@ -1,5 +1,5 @@
-function batchProcessVideos(filetype,frameRate)
-clearvars -except filetype frameRate
+function batchProcessVideos(filetype,frameRate,strelsize,numopens)
+clearvars -except filetype frameRate strelsize numopens
 
 if strmatch(filetype,'spe')
     folder = uigetdir();
@@ -12,7 +12,7 @@ else
 end
 
 for i=1:size(files,1)
-    fprintf(1,'Processing file %d of %d',[i size(files,1)])
+
     if strmatch(filetype,'spe')
         %Make progress bar
         barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File %s of %s',num2str(i),num2str(size(files,1))),...
@@ -31,8 +31,8 @@ for i=1:size(files,1)
         error('Error. Filetype must be "tif" or "spe"');
     end
 
-    [Lmatrix,mask,imagemed]=processImage(imagestack);
-    [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
+    [Lmatrix,mask,imagemed]=processImage(imagestack,strelsize,numopens);
+    [measuredValues]=processROI(imagestack,Lmatrix,barhandle,frameRate);
     if isempty(measuredValues)
         %do nothing
     else

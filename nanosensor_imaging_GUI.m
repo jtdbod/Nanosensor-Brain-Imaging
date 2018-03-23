@@ -175,7 +175,7 @@ if true(FilterIndex)
             strelsize=get(handles.strelSlider,'Value');
             numopens=get(handles.numopens_slider,'Value');
             [Lmatrix,mask,imagemed]=processImage(imagestack,strelsize,numopens);
-            [measuredValues]=processROI(imagestack,Lmatrix,barhandle);
+            [measuredValues]=processROI(imagestack,Lmatrix,barhandle,frameRate);
             if isempty(measuredValues)
                 %do nothing
                 delete(barhandle);
@@ -201,7 +201,9 @@ if true(get(handles.radiobuttonSPE,'Value'))
 elseif true(get(handles.radiobuttonTIF,'Value'))
     fileType = 'tif';
 end
-batchProcessVideos(fileType,frameRate);
+strelsize=get(handles.strelSlider,'Value');
+numopens=get(handles.numopens_slider,'Value');
+batchProcessVideos(fileType,frameRate,strelsize,numopens);
 
 % --- Executes on button press in driftcheck.
 function driftcheck_Callback(hObject, eventdata, handles)

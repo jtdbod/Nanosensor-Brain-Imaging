@@ -1,9 +1,9 @@
-function [measuredValues]=processROI(imagestack,Lmatrix,h)   
+function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)   
     frames=size(imagestack,3);
     %measuredValues = zeros(max(Lmatrix(:)),frames);
     measuredValues = struct('MeanIntensity',zeros(1,size(imagestack,3)),'Area',zeros(1,size(imagestack,3)),'CenterX',zeros(1,size(imagestack,3)),'CenterY',zeros(1,size(imagestack,3)));
     measuredAreas = zeros(max(Lmatrix(:)),frames);
-    fprintf(1,'\tCalculating traces (frame):\t')
+
     dataResults=struct('MeanItensity',[zeros(length(frames))],'RoiArea',[],'dF',[zeros(length(frames))]);
     for frame = 1:frames
         % Check for Cancel button press
@@ -49,7 +49,10 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h)
         f=measuredValues(roi).MeanIntensity;
         df=(f-f0)./f0;
         measuredValues(roi).dF=df;
+        measuredValues(roi).Time=(1:length(df))./frameRate;
     end
-
+    
+    
+    
     delete(h);
 end
