@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 19-Mar-2018 18:14:21
+% Last Modified by GUIDE v2.5 23-Mar-2018 11:32:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -460,3 +460,42 @@ function copy_figure_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 print('-noui','-clipboard','-dpdf');
+
+
+% --- Executes on button press in calc_spike_slope.
+function calc_spike_slope_Callback(hObject, eventdata, handles)
+% hObject    handle to calc_spike_slope (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in batch_calc_spike_slope.
+function batch_calc_spike_slope_Callback(hObject, eventdata, handles)
+% hObject    handle to batch_calc_spike_slope (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+frameRate=str2double(get(handles.enterframerate,'String'));
+
+folder = uigetdir();
+files=dir(strcat(folder,'/','*.mat'));
+
+spikeSlopes=[]; %Store slopes in this array
+%fileNumbers = []; %Stores file number for each slope measurements
+roiNumbers = []; %Stores roiNumber for each slope measurement
+for ifile = 1:length(files)
+
+    load(strcat(folder,'/',files(ifile).name),'measuredValues');
+    [spikeSlopes,roiNumbers]=computespikeslope(measuredValues,frameRate,spikeSlopes,roiNumbers);
+end
+
+axes(handles.axes2);
+hold off
+notBoxPlot(spikeSlopes);
+xlabel('All Spike Events')
+ylabel('Slope ([dF/F]/s)')
+axes(handles.axes3);
+hold off
+hist(spikeSlopes)
+xlabel('Slope ([dF/F]/s)')
+ylabel('Counts')

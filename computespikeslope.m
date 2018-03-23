@@ -1,7 +1,6 @@
 %Calculate initial slopes of dF/F spikes
 
-%TO DO: need to integrate this into the GUI
-batchcomputespikeslope(frameRate)
+
 function [spikeSlopes,roiNumbers]=computespikeslope(measuredValues,frameRate,spikeSlopes,roiNumbers)
 
 numTraces=size(measuredValues,2);
@@ -33,46 +32,4 @@ for itrace=1:numTraces
     
 end
 
-%table(roiNumbers,spikeSlopes);
-%{
-subplot(121)
-notBoxPlot(spikeSlopes);
-xlabel('File Num')
-ylabel('Slope ([dF/F]/s)')
-fixfig
-subplot(122)
-hist(spikeSlopes)
-xlabel('Slope ([dF/F]/s)')
-ylabel('Counts')
-fixfig
-%}
 end
-
-function [spikeSlopes,roiNumbers]=batchcomputespikeslope(frameRate)
-
-    folder = uigetdir();
-    files=dir(strcat(folder,'/','*.mat'));
-    
-    spikeSlopes=[]; %Store slopes in this array
-    %fileNumbers = []; %Stores file number for each slope measurements
-    roiNumbers = []; %Stores roiNumber for each slope measurement
-    for ifile = 1:length(files)
-        
-        load(strcat(folder,'/',files(ifile).name),'measuredValues');
-        [spikeSlopes,roiNumbers]=computespikeslope(measuredValues,frameRate,spikeSlopes,roiNumbers)
-    end
-    
-subplot(121)
-notBoxPlot(spikeSlopes);
-xlabel('File Num')
-ylabel('Slope ([dF/F]/s)')
-fixfig
-subplot(122)
-hist(spikeSlopes)
-xlabel('Slope ([dF/F]/s)')
-ylabel('Counts')
-fixfig
-    
-end
-
-
