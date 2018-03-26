@@ -14,17 +14,6 @@ Detailed README updates coming soon!
 
 ---
 
-`analyzeROIs.m` - Main function for bulk processing a folder containing either ".tif" or ".spe" image stacks. 
-
-Useage:
-analyzeROIs(filetype,frameRate)
-
-filetype - Use either 'tif' or 'spe' to designate the filetype
-
-frameRate - Enter framerate in units of frames/second
-
----
-
 `SpeReader.m` - Helper function for importing Princeton Instruments '.spe' image stacks. Obtained from the Mathworks File Exchange (see Legal below)
 
 ---
