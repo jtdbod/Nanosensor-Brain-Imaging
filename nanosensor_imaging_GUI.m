@@ -461,7 +461,13 @@ function copy_figure_Callback(hObject, eventdata, handles)
 % hObject    handle to copy_figure (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-print('-noui','-clipboard','-dpdf');
+ax=gca;
+newFig=figure('visible','off');
+newHandle = copyobj(ax,newFig);
+%print(newFig,'-noui','-clipboard','-dpdf');
+editmenufcn(newFig,'EditCopyFigure')
+delete(newFig);
+
 
 
 % --- Executes on button press in calc_spike_slope.
