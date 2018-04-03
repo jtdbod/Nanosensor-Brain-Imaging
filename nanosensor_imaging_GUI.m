@@ -150,9 +150,11 @@ elseif true(get(handles.radiobuttonTIF,'Value'))
     fileType = 'tif';
 end
 [FileName,PathName,FilterIndex] = uigetfile(strcat('*.',fileType));
+file = struct('name',FileName); %Convert to structure for consistency with batch processing code
 if true(FilterIndex)
-    file.name = strcat(PathName,'/',FileName);
-    fprintf(1,'Processing file ')
+    
+    %file.name = strcat(PathName,'/',FileName);
+    %fprintf(1,'Processing file ')
         if strmatch(fileType,'spe')
             %Make progress bar
             barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File 1 of 1'),...
@@ -160,7 +162,7 @@ if true(FilterIndex)
                     'setappdata(gcbf,''canceling'',1)');
             setappdata(barhandle,'canceling',0)
 
-            [imagestack,filename]=loadIMstackSPE(file,1,barhandle);
+            [imagestack,filename]=loadIMstackSPE(PathName,file,1,barhandle);
         elseif strmatch(fileType,'tif')
             %Make progress bar
             barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
@@ -168,27 +170,37 @@ if true(FilterIndex)
                     'setappdata(gcbf,''canceling'',1)');
             setappdata(barhandle,'canceling',0)
 
-            [imagestack,filename]=loadIMstackTIF(file,1,barhandle);
+            [imagestack,filename]=loadIMstackTIF(PathName,file,1,barhandle);
         else
             error('Error. Filetype must be "tif" or "spe"');
         end
-            strelsize=get(handles.strelSlider,'Value');
-            numopens=get(handles.numopens_slider,'Value');
-            [Lmatrix,mask,imagemed]=processImage(imagestack,strelsize,numopens);
-            [measuredValues]=processROI(imagestack,Lmatrix,barhandle,frameRate);
-            if isempty(measuredValues)
-                %do nothing
-                delete(barhandle);
-            else
-                plotResults(mask,imagemed,measuredValues,frameRate);
-                %csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
-                savefig(strcat(PathName,'/',FileName(1:end-4)));
-                save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
-                clear imagestack Lmatrix mask imagemed measuredValues 
+        strelsize=get(handles.strelSlider,'Value');
+        numopens=get(handles.numopens_slider,'Value');
+        [Lmatrix,mask,imagemed]=processImage(imagestack,strelsize,numopens);
+        [measuredValues]=processROI(imagestack,Lmatrix,barhandle,frameRate);
+        if isempty(measuredValues)
+            %do nothing
+            delete(barhandle);
+        else
+            plotResults(mask,imagemed,measuredValues,frameRate,handles);
+            %csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
+            savefig(strcat(PathName,'/',FileName(1:end-4)));
+            save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
+            %handles.dataset.measuredValues = measuredValues;
+            guidata(hObject,handles);%To save dataset to handles
+            clear imagestack Lmatrix mask imagemed measuredValues 
 
-                delete(barhandle);
+            delete(barhandle);
         end
+
+        %[FileName,PathName,FilterIndex] = uigetfile('*.mat');
+        FileName = strcat(FileName(1:end-4),'.mat');
+        handles.dataset = load(strcat(PathName,'/',FileName));
+        guidata(hObject,handles);%To save dataset to handles
+        assignin('base', 'measuredValues', measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
 end
+
+
 
 % --- Executes on button press in batchprocessbutton.
 function batchprocessbutton_Callback(hObject, eventdata, handles)
@@ -203,7 +215,7 @@ elseif true(get(handles.radiobuttonTIF,'Value'))
 end
 strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
-batchProcessVideos(fileType,frameRate,strelsize,numopens);
+batchProcessVideos(fileType,frameRate,strelsize,numopens,handles);
 
 % --- Executes on button press in driftcheck.
 function driftcheck_Callback(hObject, eventdata, handles)

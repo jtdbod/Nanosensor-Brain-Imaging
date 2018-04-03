@@ -1,4 +1,4 @@
-function batchProcessVideos(filetype,frameRate,strelsize,numopens)
+function batchProcessVideos(filetype,frameRate,strelsize,numopens,handles)
 clearvars -except filetype frameRate strelsize numopens
 
 if strmatch(filetype,'spe')
@@ -36,7 +36,7 @@ for i=1:size(files,1)
     if isempty(measuredValues)
         %do nothing
     else
-        plotResults(mask,imagemed,measuredValues,frameRate);
+        plotResults(mask,imagemed,measuredValues,frameRate,handles);
         %csvwrite(strcat(folder,'/',filename(1:end-4),'.csv'),measuredValues);
         %savefig(strcat(folder,'/',filename(1:end-4)));
         save(strcat(files(i).folder,'/',files(i).name(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');

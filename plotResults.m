@@ -1,6 +1,8 @@
-function []=plotResults(mask,imagemed,measuredValues,frameRate)
-    figure(1)
-    subplot(131)
+function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
+
+    %Plot the ROI overlay figure
+    currFig = gcf;
+    axes(handles.axes1);
     [B,L,N,A] = bwboundaries(mask,'noholes');
     imagesc(imagemed); hold on;
     colors=['b' 'g' 'r' 'c' 'm' 'y'];
@@ -16,30 +18,32 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate)
       h = text(col+1, row-1, num2str(L(row,col)));
       set(h,'Color',colors(cidx),'FontSize',14);
     end
-    subplot(132)
+    
+    %Plot all dF/F traces
+    axes(handles.axes2);
     for tracenum=1:size(measuredValues,1)
         %%%%NEED TO WORK ON THIS BASELINE CORRECTION AND NORMALIZATION
-        signal = measuredValues(tracenum).MeanIntensity+abs(min(measuredValues(tracenum).MeanIntensity));
-        signal = signal./max(signal);
+        signal = measuredValues.dF;
         traces(tracenum,:)=signal;
     end
-        
     x = 1:size(traces,2);
     x=x./frameRate;
     for trace=1:size(traces,1)
-        %smoothed=smooth(traces(trace,:),'rloess');
+        
         plot(x,traces(trace,:)+trace-1);
-        %plot(x,smoothed+trace-1)
+
         text(0,trace,num2str(trace));
         hold on
     end
     xlabel('Time (s)')
     ylabel('Normalized Intensity (a.u.)')
     
-    subplot(133)
+    
+    
+    axes(handles.axes3);
     x=x;
     y=1:size(traces,1);
     imagesc(x,y,traces)
     ylabel('ROI#');
     xlabel('Time (s)');
-end
+    end

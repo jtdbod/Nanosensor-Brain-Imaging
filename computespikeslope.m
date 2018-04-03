@@ -34,7 +34,6 @@ for itrace=1:numTraces
     %text(locs+.02,pks,num2str((1:numel(pks))'))
     
 
-    
 end
 
 end
