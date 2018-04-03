@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 23-Mar-2018 11:32:03
+% Last Modified by GUIDE v2.5 02-Apr-2018 18:49:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -408,6 +408,8 @@ function plotHistogram_Callback(hObject, eventdata, handles)
 for i=1:size(handles.dataset.measuredValues,2);
     ROIsize(i) = handles.dataset.measuredValues(i).Area(1);
 end
+axes(handles.axes2)
+cla(handles.axes2)
 hist(ROIsize);
 xlabel('ROI size (pixels)')
 ylabel('Count')
@@ -468,6 +470,23 @@ function calc_spike_slope_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+measuredValues=handles.dataset.measuredValues;
+frameRate=str2double(get(handles.enterframerate,'String'));
+spikeSlopes=[]; %Store slopes in this array
+%fileNumbers = []; %Stores file number for each slope measurements
+roiNumbers = []; %Stores roiNumber for each slope measurement
+
+[spikeSlopes,roiNumbers]=computespikeslope(measuredValues,frameRate,spikeSlopes,roiNumbers);
+axes(handles.axes2);
+cla(handles.axes2);
+notBoxPlot(spikeSlopes);
+xlabel('All Spike Events')
+ylabel('Slope ([dF/F]/s)')
+axes(handles.axes3);
+cla(handles.axes3);
+hist(spikeSlopes)
+xlabel('Slope ([dF/F]/s)')
+ylabel('Counts')
 
 % --- Executes on button press in batch_calc_spike_slope.
 function batch_calc_spike_slope_Callback(hObject, eventdata, handles)

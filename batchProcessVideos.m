@@ -26,7 +26,7 @@ for i=1:size(files,1)
                 'CreateCancelBtn',...
                 'setappdata(gcbf,''canceling'',1)');
         setappdata(barhandle,'canceling',0)
-        [imagestack,filename]=loadIMstackTIF(files,i,barhandle);
+        [imagestack,filename]=loadIMstackTIF(folder,files,i,barhandle);
     else
         error('Error. Filetype must be "tif" or "spe"');
     end
@@ -38,8 +38,8 @@ for i=1:size(files,1)
     else
         plotResults(mask,imagemed,measuredValues,frameRate);
         %csvwrite(strcat(folder,'/',filename(1:end-4),'.csv'),measuredValues);
-        savefig(strcat(folder,'/',filename(1:end-4)));
-        save(strcat(folder,'/',filename(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
+        %savefig(strcat(folder,'/',filename(1:end-4)));
+        save(strcat(files(i).folder,'/',files(i).name(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
         clear imagestack Lmatrix mask imagemed measuredValues 
         close all
     end

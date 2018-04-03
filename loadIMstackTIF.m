@@ -1,7 +1,7 @@
-function [imagestack,filename]=loadIMstackTIF(files,i,h) %Load image stacks into variable "imagestack"
+function [imagestack,filename]=loadIMstackTIF(folder,files,i,h) %Load image stacks into variable "imagestack"
     
 
-    filename=files(i).name;
+    filename=strcat(folder,'/',files(i).name);
     fileinfo=imfinfo(filename);
     height=fileinfo(1).Height;
     width=fileinfo(1).Width;
