@@ -3,6 +3,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
     %Plot the ROI overlay figure
     currFig = gcf;
     axes(handles.axes1);
+    cla(handles.axes1);
     [B,L,N,A] = bwboundaries(mask,'noholes');
     imagesc(imagemed); hold on;
     colors=['b' 'g' 'r' 'c' 'm' 'y'];
@@ -21,29 +22,36 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
     
     %Plot all dF/F traces
     axes(handles.axes2);
-    for tracenum=1:size(measuredValues,1)
+    cla(handles.axes2);
+    hold on
+    for tracenum=1:size(measuredValues,2)
         %%%%NEED TO WORK ON THIS BASELINE CORRECTION AND NORMALIZATION
-        signal = measuredValues.dF;
+        signal = measuredValues(tracenum).dF;
         traces(tracenum,:)=signal;
     end
     x = 1:size(traces,2);
     x=x./frameRate;
     for trace=1:size(traces,1)
-        
-        plot(x,traces(trace,:)+trace-1);
-
-        text(0,trace,num2str(trace));
+        if trace==1
+            plot(x,traces(trace,:));
+            plottedTrace=traces(trace,:); %So I can stack traces on top of each other
+        else
+            plottedTrace = traces(trace,:)+max(plottedTrace);
+            plot(x,plottedTrace);
+        end
+        text(0,plottedTrace(1),num2str(trace));
         hold on
     end
     xlabel('Time (s)')
-    ylabel('Normalized Intensity (a.u.)')
+    ylabel('dF/F')
     
     
-    
+    %Plot heat map of all ROI activity using imagesc
     axes(handles.axes3);
+    cla(handles.axes3);
     x=x;
     y=1:size(traces,1);
-    imagesc(x,y,traces)
+    %surf(x,y,traces)
     ylabel('ROI#');
     xlabel('Time (s)');
     end

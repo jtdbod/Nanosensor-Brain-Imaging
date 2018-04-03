@@ -79,64 +79,21 @@ function loadbutton_Callback(hObject, eventdata, handles)
 
 %Load file
 [FileName,PathName,FilterIndex] = uigetfile('*.mat');
-handles.dataset = load(strcat(PathName,'/',FileName));
-guidata(hObject,handles);%To save dataset to handles
-frameRate=str2double(get(handles.enterframerate,'String'));
-%CurrentFileLoaded();
-%set(handles.CurrentFileLoaded, 'String', FileName);
-
-%Plot file
-
-axes(handles.axes1)
-    [B,L,N,A] = bwboundaries(handles.dataset.mask,'noholes');
-    imagesc(handles.dataset.imagemed); hold on;
-    colors=['b' 'g' 'r' 'c' 'm' 'y'];
-    for k=1:length(B),
-      boundary = B{k};
-      cidx = mod(k,length(colors))+1;
-      plot(boundary(:,2), boundary(:,1),...
-           colors(cidx),'LineWidth',1);
-
-      %randomize text position for better visibility
-      rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
-      col = boundary(rndRow,2); row = boundary(rndRow,1);
-      h = text(col+1, row-1, num2str(L(row,col)));
-      set(h,'Color',colors(cidx),'FontSize',14);
-    end
-axes(handles.axes2)
-    for tracenum=1:size(handles.dataset.measuredValues,1)
-        %%%%NEED TO WORK ON THIS BASELINE CORRECTION AND NORMALIZATION
-        measuredValues=handles.dataset.measuredValues;
-        signal = measuredValues(tracenum).MeanIntensity+abs(min(measuredValues(tracenum).MeanIntensity));
-        signal = signal./max(signal);
-        traces(tracenum,:)=signal;
-    end
-        
-    x = 1:size(traces,2);
-    x=x./frameRate;
-    for trace=1:size(traces,1)
-        %smoothed=smooth(traces(trace,:),'rloess');
-        plot(x,traces(trace,:)+trace-1);
-        %plot(x,smoothed+trace-1)
-        text(0,trace,num2str(trace));
-        hold on
-    end
-    xlabel('Time (s)')
-    ylabel('Normalized Intensity (a.u.)')
-    
-axes(handles.axes3)
-    
-    x=1:size(handles.dataset.measuredValues,2);
+if isequal(FileName,0)
+    %Do nothing
+else
+    handles.dataset = load(strcat(PathName,'/',FileName));
+    guidata(hObject,handles);%To save dataset to handles
     frameRate=str2double(get(handles.enterframerate,'String'));
-    x=x./frameRate;
-    y=1:size(traces,1);
-    imagesc(x,y,traces)
-    ylabel('ROI#');
-    xlabel('Time (s)');
+    %CurrentFileLoaded();
+    %set(handles.CurrentFileLoaded, 'String', FileName);
 
-set(handles.CurrentFileLoaded,'String',FileName);
-assignin('base', 'measuredValues', measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
-
+    %Plot file
+    plotResults(handles.dataset.mask,handles.dataset.imagemed,handles.dataset.measuredValues,frameRate,handles);
+   
+    set(handles.CurrentFileLoaded,'String',FileName);
+    assignin('base', 'measuredValues', handles.dataset.measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
+end
 % --- Executes on button press in processfilebutton.
 function processfilebutton_Callback(hObject, eventdata, handles)
 % hObject    handle to processfilebutton (see GCBO)
@@ -450,7 +407,7 @@ function CorrelationMatrix_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-axes(handles.axes2);
+axes(handles.axes3);
 
 hold off
 data=handles.dataset.measuredValues;
