@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 02-Apr-2018 18:49:00
+% Last Modified by GUIDE v2.5 03-Apr-2018 23:24:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -93,6 +93,12 @@ else
    
     set(handles.CurrentFileLoaded,'String',FileName);
     assignin('base', 'measuredValues', handles.dataset.measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
+    
+    %Generate listbox containing list of each ROI for selection
+    roiNames = 1:size(handles.dataset.measuredValues,2);
+    roiNamesStr = num2str(roiNames')
+    set(handles.roi_listbox,'string',roiNamesStr);
+    
 end
 % --- Executes on button press in processfilebutton.
 function processfilebutton_Callback(hObject, eventdata, handles)
@@ -154,7 +160,7 @@ if true(FilterIndex)
         FileName = strcat(FileName(1:end-4),'.mat');
         handles.dataset = load(strcat(PathName,'/',FileName));
         guidata(hObject,handles);%To save dataset to handles
-        assignin('base', 'measuredValues', measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
+        assignin('base', 'measuredValues', handles.dataset.measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
 end
 
 
@@ -379,8 +385,8 @@ for i=1:size(handles.dataset.measuredValues,2);
 end
 axes(handles.axes2)
 cla(handles.axes2)
-hist(ROIsize);
-xlabel('ROI size (pixels)')
+hist(sqrt(ROIsize));
+xlabel('sqrt(ROI size) (pixels)')
 ylabel('Count')
 
 
@@ -493,3 +499,37 @@ hold off
 hist(spikeSlopes)
 xlabel('Slope ([dF/F]/s)')
 ylabel('Counts')
+
+
+% --- Executes on selection change in roi_listbox.
+function roi_listbox_Callback(hObject, eventdata, handles)
+% hObject    handle to roi_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns roi_listbox contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from roi_listbox
+roi_selected = get(handles.roi_listbox,'Value');
+axes(handles.axes2)
+cla(handles.axes2)
+plot(handles.dataset.measuredValues(roi_selected).dF)
+
+% --- Executes during object creation, after setting all properties.
+function roi_listbox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to roi_listbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in delete_roi_button.
+function delete_roi_button_Callback(hObject, eventdata, handles)
+% hObject    handle to delete_roi_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+f = msgbox('Not Yet Operational. <3 Travis');

@@ -1,5 +1,5 @@
 function batchProcessVideos(filetype,frameRate,strelsize,numopens,handles)
-clearvars -except filetype frameRate strelsize numopens
+clearvars -except filetype frameRate strelsize numopens handles
 
 if strmatch(filetype,'spe')
     folder = uigetdir();
@@ -41,10 +41,10 @@ for i=1:size(files,1)
         %savefig(strcat(folder,'/',filename(1:end-4)));
         save(strcat(files(i).folder,'/',files(i).name(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
         clear imagestack Lmatrix mask imagemed measuredValues 
-        close all
+        %close all
     end
 end
 
-delete(findall(0,'Type','Figure'))
+%delete(findall(0,'Type','Figure'))
 
 end

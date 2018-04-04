@@ -51,7 +51,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
     cla(handles.axes3);
     x=x;
     y=1:size(traces,1);
-    %surf(x,y,traces)
+    imagesc(x,y,traces)
     ylabel('ROI#');
     xlabel('Time (s)');
     end
