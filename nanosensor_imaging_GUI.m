@@ -161,6 +161,10 @@ if true(FilterIndex)
         handles.dataset = load(strcat(PathName,'/',FileName));
         guidata(hObject,handles);%To save dataset to handles
         assignin('base', 'measuredValues', handles.dataset.measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
+        %Generate listbox containing list of each ROI for selection
+        roiNames = 1:size(handles.dataset.measuredValues,2);
+        roiNamesStr = num2str(roiNames')
+        set(handles.roi_listbox,'string',roiNamesStr);
 end
 
 
