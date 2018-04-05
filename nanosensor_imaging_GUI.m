@@ -97,6 +97,7 @@ else
     %Generate listbox containing list of each ROI for selection
     roiNames = 1:size(handles.dataset.measuredValues,2);
     roiNamesStr = num2str(roiNames');
+    set(handles.roi_listbox,'Value',1); 
     set(handles.roi_listbox,'string',roiNamesStr);
     
 end
@@ -164,6 +165,7 @@ if true(FilterIndex)
         %Generate listbox containing list of each ROI for selection
         roiNames = 1:size(handles.dataset.measuredValues,2);
         roiNamesStr = num2str(roiNames');
+        set(handles.roi_listbox,'Value',1); 
         set(handles.roi_listbox,'string',roiNamesStr);
 end
 
