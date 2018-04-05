@@ -96,7 +96,7 @@ else
     
     %Generate listbox containing list of each ROI for selection
     roiNames = 1:size(handles.dataset.measuredValues,2);
-    roiNamesStr = num2str(roiNames')
+    roiNamesStr = num2str(roiNames');
     set(handles.roi_listbox,'string',roiNamesStr);
     
 end
@@ -163,7 +163,7 @@ if true(FilterIndex)
         assignin('base', 'measuredValues', handles.dataset.measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
         %Generate listbox containing list of each ROI for selection
         roiNames = 1:size(handles.dataset.measuredValues,2);
-        roiNamesStr = num2str(roiNames')
+        roiNamesStr = num2str(roiNames');
         set(handles.roi_listbox,'string',roiNamesStr);
 end
 
