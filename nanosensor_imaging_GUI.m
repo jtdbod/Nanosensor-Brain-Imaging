@@ -518,7 +518,10 @@ function roi_listbox_Callback(hObject, eventdata, handles)
 roi_selected = get(handles.roi_listbox,'Value');
 axes(handles.axes2)
 cla(handles.axes2)
-plot(handles.dataset.measuredValues(roi_selected).dF)
+frameRate=str2double(get(handles.enterframerate,'String'));
+x=1:length(handles.dataset.measuredValues(roi_selected).dF);
+x=x./frameRate;
+plot(x,handles.dataset.measuredValues(roi_selected).dF)
 
 % --- Executes during object creation, after setting all properties.
 function roi_listbox_CreateFcn(hObject, eventdata, handles)
