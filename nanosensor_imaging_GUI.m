@@ -148,7 +148,7 @@ if true(FilterIndex)
         else
             plotResults(mask,imagemed,measuredValues,frameRate,handles);
             %csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
-            savefig(strcat(PathName,'/',FileName(1:end-4)));
+            %savefig(strcat(PathName,'/',FileName(1:end-4)));
             save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
             %handles.dataset.measuredValues = measuredValues;
             guidata(hObject,handles);%To save dataset to handles
