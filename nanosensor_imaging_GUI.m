@@ -96,7 +96,8 @@ else
     
     %Generate listbox containing list of each ROI for selection
     roiNames = 1:size(handles.dataset.measuredValues,2);
-    roiNamesStr = num2str(roiNames')
+    roiNamesStr = num2str(roiNames');
+    set(handles.roi_listbox,'Value',1); 
     set(handles.roi_listbox,'string',roiNamesStr);
     
 end
@@ -147,7 +148,7 @@ if true(FilterIndex)
         else
             plotResults(mask,imagemed,measuredValues,frameRate,handles);
             %csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
-            savefig(strcat(PathName,'/',FileName(1:end-4)));
+            %savefig(strcat(PathName,'/',FileName(1:end-4)));
             save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
             %handles.dataset.measuredValues = measuredValues;
             guidata(hObject,handles);%To save dataset to handles
@@ -163,7 +164,8 @@ if true(FilterIndex)
         assignin('base', 'measuredValues', handles.dataset.measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
         %Generate listbox containing list of each ROI for selection
         roiNames = 1:size(handles.dataset.measuredValues,2);
-        roiNamesStr = num2str(roiNames')
+        roiNamesStr = num2str(roiNames');
+        set(handles.roi_listbox,'Value',1); 
         set(handles.roi_listbox,'string',roiNamesStr);
 end
 

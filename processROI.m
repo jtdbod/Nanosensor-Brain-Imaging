@@ -1,7 +1,7 @@
 function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)   
     frames=size(imagestack,3);
     %measuredValues = zeros(max(Lmatrix(:)),frames);
-    measuredValues = struct('MeanIntensity',zeros(1,size(imagestack,3)),'Area',zeros(1,size(imagestack,3)),'CenterX',zeros(1,size(imagestack,3)),'CenterY',zeros(1,size(imagestack,3)));
+    measuredValues = struct('MeanIntensity',zeros(1,size(imagestack,3)),'Area',zeros(1,size(imagestack,3)),'CenterX',zeros(1,size(imagestack,3)),'CenterY',zeros(1,size(imagestack,3)),'dF',zeros(1,size(imagestack,3)));
     measuredAreas = zeros(max(Lmatrix(:)),frames);
 
     dataResults=struct('MeanItensity',[zeros(length(frames))],'RoiArea',[],'dF',[zeros(length(frames))]);
@@ -42,10 +42,11 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)
     end
     %fprintf(1,'%d',frame)
     %fprintf('\n')
-    
+
     %Calculate dF/F using first 50 frames as F0
+    F0 = floor(1:frames*0.05); %Make F0 the average of the first 5% of frames).
     for roi=1:numROIs
-        f0=mean(measuredValues(roi).MeanIntensity(1:50));
+        f0=mean(measuredValues(roi).MeanIntensity(1:F0));
         f=measuredValues(roi).MeanIntensity;
         df=(f-f0)./f0;
         measuredValues(roi).dF=df;
