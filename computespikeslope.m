@@ -1,10 +1,12 @@
 %Calculate initial slopes of dF/F spikes
 
 
-function [spikeSlopes,roiNumbers,pks,locs]=computespikeslope(measuredValues,frameRate,spikeSlopes,roiNumbers)
+function [spikeSlopes,roiNumbers,peakHeights,peakLocs]=computespikeslope(measuredValues,frameRate,spikeSlopes,roiNumbers)
 
 numTraces=size(measuredValues,2);
 tableLabels = {'File','ROI-#','Calculated Slope'};
+peakHeights=[];
+peakLocs=[];
 
 %spikeSlopes=[]; %Store slopes in this array
 %fileNumbers = []; %Stores file number for each slope measurements
@@ -20,6 +22,8 @@ for itrace=1:numTraces
     spikeSlopes = [spikeSlopes spikeSlope]; %append new value
     %fileNumbers = [fileNumbers ifileNumber];
     roiNumbers = [roiNumbers itrace];
+    peakHeights=[peakHeights; pks];
+    peakLocs = [peakLocs; locs];
     
     %{
     spikelog=figure();

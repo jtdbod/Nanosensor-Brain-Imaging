@@ -463,7 +463,7 @@ spikeSlopes=[]; %Store slopes in this array
 %fileNumbers = []; %Stores file number for each slope measurements
 roiNumbers = []; %Stores roiNumber for each slope measurement
 
-[spikeSlopes,roiNumbers]=computespikeslope(measuredValues,frameRate,spikeSlopes,roiNumbers);
+[spikeSlopes,roiNumbers, pks, locs]=computespikeslope(measuredValues,frameRate,spikeSlopes,roiNumbers);
 axes(handles.axes2);
 cla(handles.axes2);
 notBoxPlot(spikeSlopes);
@@ -471,9 +471,21 @@ xlabel('All Spike Events')
 ylabel('Slope ([dF/F]/s)')
 axes(handles.axes3);
 cla(handles.axes3);
+elapsedTime=(1:size(measuredValues(1).dF,2))./frameRate;
+for itrace=1:size(measuredValues,2)
+    plot(elapsedTime,measuredValues(itrace).dF)
+    hold on
+end
+
+scatter(locs./frameRate,pks,72,'vk','filled');
+
+%{
 hist(spikeSlopes)
 xlabel('Slope ([dF/F]/s)')
 ylabel('Counts')
+%}
+
+
 
 % --- Executes on button press in batch_calc_spike_slope.
 function batch_calc_spike_slope_Callback(hObject, eventdata, handles)
