@@ -1,25 +1,29 @@
-function [Lmatrix,mask,imagemed]=processImage(imagestack,strelsize,numopens)
-    imagestd=std(imagestack,0,3); %Standard deviation of video stack for each pixel
-    imagemed=medfilt2(imagestd); %Smoothing filter to eliminate noise.
-    
-    %Testing: normalize the SD to the mean pixel intensity.
-    imageavg=mean(imagestack,3);
-    
-    image = imagemed./max(imagemed(:));
-    image2 = imadjust(image);
-    image2 = medfilt2(image2);
-    mask1 = imbinarize(image2,(mean2(image2)+3*std2(image2)));%, 'adaptive','ForegroundPolarity','bright','Sensitivity',0.5);
-    mask1 = bwareaopen(mask1,10); %Remove ROIs with fewer than 10 pixels
-    %The above threshold is too high for the Ninox data
-    %thresh=multithresh(image2);
-    se = strel('disk',strelsize);
-    mask2=mask1;
-    %{
-    for opens=1:numopens
-        mask2=imopen(mask2,se);
+function [Lmatrix,mask,imagestdsmooth]=processImage(imagestack,strelsize,numopens)
+    %Test for negative pixel values and correct.
+    if any(imagestack(:)<0)
+        imagestack = imagestack-min(imagestack(:));
     end
-    %}
-    mask=mask2;
+    
+    imagestd = std(imagestack,[],3); %Calculate standard deviation image
+    imagemean = mean(imagestack,3); %Calculate average image
+    
+    imagestdsmooth = medfilt2(imagestd); %Remove noise
+    imagemeansmooth=medfilt2(imagemean); %Remove noise
+    
+    imagestdsmoothnormed = imagestdsmooth./imagemeansmooth; %Normalize STD stack to mean stack
+    imagestdsmoothnormed = imagestdsmoothnormed./max(imagestdsmoothnormed(:)); %Norm to 1.
+    %imagestdsmoothnormed = imagestdsmooth./max(imagestdsmooth(:)); %Normalize the STD stack so range [0 1]
+    imagestdsmoothnormed(isnan(imagestdsmoothnormed)) = 0; %Remove NaN
+    
+    %Create mask
+    mask1 = imbinarize(imagestdsmoothnormed,'adaptive',...
+        'ForegroundPolarity','bright','Sensitivity',0.4); %Threshold image
+    mask1 = bwareaopen(mask1,10); %Remove ROIs with fewer than 10 pixels
+    
+    se = strel('disk',strelsize);
+    mask2 = imdilate(mask1,se); %Expands ROIs by "strelsize" provided by user
+    mask = mask2;
+ 
     CC = bwconncomp(mask);
     Lmatrix = labelmatrix(CC);
 end
