@@ -83,6 +83,7 @@ if isequal(FileName,0)
     %Do nothing
 else
     handles.dataset = load(strcat(PathName,'/',FileName));
+    handles.dataset.filename=strcat(PathName,'/',FileName); %Store filename and path in data structure
     guidata(hObject,handles);%To save dataset to handles
     frameRate=str2double(get(handles.enterframerate,'String'));
     %CurrentFileLoaded();
@@ -92,12 +93,12 @@ else
     plotResults(handles.dataset.mask,handles.dataset.imagemed,handles.dataset.measuredValues,frameRate,handles);
    
     set(handles.CurrentFileLoaded,'String',FileName);
-    assignin('base', 'measuredValues', handles.dataset.measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
+    assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
     
-    %Generate listbox containing list of each ROI for selection
-    roiNames = 1:size(handles.dataset.measuredValues,2);
-    roiNamesStr = num2str(roiNames');
-    set(handles.roi_listbox,'Value',1); 
+    %Update listbox containing list of each ROI for selection
+    roiNames = nonzeros(unique(handles.dataset.Lmatrix));
+    roiNamesStr = num2str(roiNames);
+    set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
     set(handles.roi_listbox,'string',roiNamesStr);
     
 end
@@ -531,9 +532,16 @@ roi_selected = get(handles.roi_listbox,'Value');
 axes(handles.axes2)
 cla(handles.axes2)
 frameRate=str2double(get(handles.enterframerate,'String'));
-x=1:length(handles.dataset.measuredValues(roi_selected).dF);
+
+%Search for ROI label matching the roi_selected for plotting
+%A = structfun(@(x) any(x==roi_selected,handles.dataset.measuredValues.ROInum)
+ROIindex = find(roi_selected==[handles.dataset.measuredValues.ROInum]);
+
+
+x=1:length(handles.dataset.measuredValues(ROIindex).dF);
 x=x./frameRate;
-plot(x,handles.dataset.measuredValues(roi_selected).dF)
+y=handles.dataset.measuredValues(ROIindex).dF;
+plot(x,y)
 
 % --- Executes during object creation, after setting all properties.
 function roi_listbox_CreateFcn(hObject, eventdata, handles)
@@ -553,4 +561,29 @@ function delete_roi_button_Callback(hObject, eventdata, handles)
 % hObject    handle to delete_roi_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-f = msgbox('Not Yet Operational. <3 Travis');
+
+roi_selected = get(handles.roi_listbox,'Value'); %Figure out which ROI is selected
+
+%Delete measuredValues for selected ROI
+handles.dataset.measuredValues(roi_selected)=[];
+handles.dataset.Lmatrix(handles.dataset.Lmatrix==roi_selected)=0;
+handles.dataset.mask(handles.dataset.Lmatrix==roi_selected)=0;
+guidata(hObject,handles);%Update dataset to handles
+%Resave updated dataset
+Lmatrix=handles.dataset.Lmatrix;
+mask=handles.dataset.mask;
+imagemed=handles.dataset.imagemed;
+measuredValues=handles.dataset.measuredValues;
+save(handles.dataset.filename,'Lmatrix','mask','imagemed','measuredValues');
+
+%Update displayed data
+frameRate=str2double(get(handles.enterframerate,'String'));
+plotResults(handles.dataset.mask,handles.dataset.imagemed,handles.dataset.measuredValues,frameRate,handles);
+
+%Update listbox containing list of each ROI for selection
+roiNames = nonzeros(unique(handles.dataset.Lmatrix));
+roiNamesStr = num2str(roiNames);
+set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
+set(handles.roi_listbox,'string',roiNamesStr);
+
+%f = msgbox('Not Yet Operational. <3 Travis');
