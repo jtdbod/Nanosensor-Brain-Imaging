@@ -39,7 +39,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
             plottedTrace = traces(trace,:)+max(plottedTrace);
             plot(x,plottedTrace);
         end
-        text(0,plottedTrace(1),num2str(trace));
+        text(0,plottedTrace(1),num2str(measuredValues.ROInum(trace)));
         hold on
     end
     xlabel('Time (s)')

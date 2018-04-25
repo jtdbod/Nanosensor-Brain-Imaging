@@ -83,7 +83,6 @@ if isequal(FileName,0)
     %Do nothing
 else
     handles.dataset = load(strcat(PathName,'/',FileName));
-    handles.dataset.filename=strcat(PathName,'/',FileName); %Store filename and path in data structure
     guidata(hObject,handles);%To save dataset to handles
     frameRate=str2double(get(handles.enterframerate,'String'));
     %CurrentFileLoaded();
@@ -157,16 +156,19 @@ if true(FilterIndex)
 
             delete(barhandle);
         end
+        
+        
 
         %[FileName,PathName,FilterIndex] = uigetfile('*.mat');
         FileName = strcat(FileName(1:end-4),'.mat');
         handles.dataset = load(strcat(PathName,'/',FileName));
+        handles.dataset.filename = strcat(PathName,'/',FileName);
         guidata(hObject,handles);%To save dataset to handles
-        assignin('base', 'measuredValues', handles.dataset.measuredValues) %Adds measuredValues for the loaded file to the current MATLAB workspace
+        assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
         %Generate listbox containing list of each ROI for selection
-        roiNames = 1:size(handles.dataset.measuredValues,2);
-        roiNamesStr = num2str(roiNames');
-        set(handles.roi_listbox,'Value',1); 
+        roiNames = nonzeros(unique(handles.dataset.Lmatrix));
+        roiNamesStr = num2str(roiNames);
+        set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
         set(handles.roi_listbox,'string',roiNamesStr);
 end
 
@@ -528,19 +530,22 @@ function roi_listbox_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns roi_listbox contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from roi_listbox
-roi_selected = get(handles.roi_listbox,'Value');
+roi_selected_value = get(handles.roi_listbox,'Value'); %Number of selected element
+roi_names = get(handles.roi_listbox,'string'); %Name of ROI selected (using roi_selected_value as index)
+roi_selected=str2num(roi_names(roi_selected_value,:));
+%Delete measuredValues for selected ROI
+
+%Find ROI name that matches selected value
+roi_index=find([handles.dataset.measuredValues.ROInum]==roi_selected);
+
 axes(handles.axes2)
 cla(handles.axes2)
 frameRate=str2double(get(handles.enterframerate,'String'));
 
-%Search for ROI label matching the roi_selected for plotting
-%A = structfun(@(x) any(x==roi_selected,handles.dataset.measuredValues.ROInum)
-ROIindex = find(roi_selected==[handles.dataset.measuredValues.ROInum]);
 
-
-x=1:length(handles.dataset.measuredValues(ROIindex).dF);
+x=1:length(handles.dataset.measuredValues(roi_index).dF);
 x=x./frameRate;
-y=handles.dataset.measuredValues(ROIindex).dF;
+y=handles.dataset.measuredValues(roi_index).dF;
 plot(x,y)
 
 % --- Executes during object creation, after setting all properties.
@@ -562,12 +567,17 @@ function delete_roi_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-roi_selected = get(handles.roi_listbox,'Value'); %Figure out which ROI is selected
-
+roi_selected_value = get(handles.roi_listbox,'Value'); %Number of selected element
+roi_names = get(handles.roi_listbox,'string'); %Name of ROI selected (using roi_selected_value as index)
+roi_selected=str2num(roi_names(roi_selected_value,:));
 %Delete measuredValues for selected ROI
-handles.dataset.measuredValues(roi_selected)=[];
-handles.dataset.Lmatrix(handles.dataset.Lmatrix==roi_selected)=0;
-handles.dataset.mask(handles.dataset.Lmatrix==roi_selected)=0;
+
+%Find ROI name that matches selected value
+roi_index=find([handles.dataset.measuredValues.ROInum]==roi_selected);
+
+handles.dataset.measuredValues(roi_index)=[];
+handles.dataset.Lmatrix(handles.dataset.Lmatrix==roi_index)=0;
+handles.dataset.mask(handles.dataset.Lmatrix==roi_index)=0;
 guidata(hObject,handles);%Update dataset to handles
 %Resave updated dataset
 Lmatrix=handles.dataset.Lmatrix;
