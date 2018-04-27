@@ -43,8 +43,8 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)
     %fprintf(1,'%d',frame)
     %fprintf('\n')
 
-    %Calculate dF/F using first 50 frames as F0
-    F0 = floor(1:frames*0.05); %Make F0 the average of the first 5% of frames).
+    %Calculate dF/F using first 5% of frames frames as F0
+    F0 = floor(frames*0.05); %Make F0 the average of the first 5% of frames).
     for roi=1:numROIs
         f0=mean(measuredValues(roi).MeanIntensity(1:F0));
         f=measuredValues(roi).MeanIntensity;
