@@ -79,6 +79,7 @@ function loadbutton_Callback(hObject, eventdata, handles)
 
 %Load file
 [FileName,PathName,FilterIndex] = uigetfile('*.mat');
+
 if isequal(FileName,0)
     %Do nothing
 else
@@ -93,7 +94,7 @@ else
    
     set(handles.CurrentFileLoaded,'String',FileName);
     assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
-    
+
     %Update listbox containing list of each ROI for selection
     roiNames = nonzeros(unique(handles.dataset.Lmatrix));
     roiNamesStr = num2str(roiNames);
@@ -146,25 +147,16 @@ if true(FilterIndex)
             %do nothing
             delete(barhandle);
         else
-            plotResults(mask,imagemed,measuredValues,frameRate,handles);
-            %csvwrite(strcat(PathName,'/',FileName(1:end-4),'.csv'),measuredValues);
-            %savefig(strcat(PathName,'/',FileName(1:end-4)));
-            save(strcat(PathName,'/',FileName(1:end-4),'.mat'),'Lmatrix','mask','imagemed','measuredValues');
-            %handles.dataset.measuredValues = measuredValues;
+            filename=strcat(PathName,'/',FileName(1:end-4));
+            save(strcat(filename,'.mat'),'Lmatrix','mask','imagemed','measuredValues','filename');
+            handles.dataset = load(filename);
             guidata(hObject,handles);%To save dataset to handles
-            clear imagestack Lmatrix mask imagemed measuredValues 
-
+            assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
+            plotResults(mask,imagemed,measuredValues,frameRate,handles);
             delete(barhandle);
         end
-        
-        
 
-        %[FileName,PathName,FilterIndex] = uigetfile('*.mat');
-        FileName = strcat(FileName(1:end-4),'.mat');
-        handles.dataset = load(strcat(PathName,'/',FileName));
-        handles.dataset.filename = strcat(PathName,'/',FileName);
-        guidata(hObject,handles);%To save dataset to handles
-        assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
+
         %Generate listbox containing list of each ROI for selection
         roiNames = nonzeros(unique(handles.dataset.Lmatrix));
         roiNamesStr = num2str(roiNames);
@@ -533,7 +525,6 @@ function roi_listbox_Callback(hObject, eventdata, handles)
 roi_selected_value = get(handles.roi_listbox,'Value'); %Number of selected element
 roi_names = get(handles.roi_listbox,'string'); %Name of ROI selected (using roi_selected_value as index)
 roi_selected=str2num(roi_names(roi_selected_value,:));
-%Delete measuredValues for selected ROI
 
 %Find ROI name that matches selected value
 roi_index=find([handles.dataset.measuredValues.ROInum]==roi_selected);
@@ -575,20 +566,29 @@ roi_selected=str2num(roi_names(roi_selected_value,:));
 %Find ROI name that matches selected value
 roi_index=find([handles.dataset.measuredValues.ROInum]==roi_selected);
 
+%NOTE: careful use of 'roi_index' for deleting correct field of the
+%measuredValues structure while 'roi_selected' is used for deleting ROIs in
+%the 'Lmatrix' and 'mask' variables.
+
 handles.dataset.measuredValues(roi_index)=[];
-handles.dataset.Lmatrix(handles.dataset.Lmatrix==roi_index)=0;
-handles.dataset.mask(handles.dataset.Lmatrix==roi_index)=0;
+handles.dataset.Lmatrix(handles.dataset.Lmatrix==roi_selected)=0;
+handles.dataset.mask(handles.dataset.Lmatrix==roi_selected)=0;
 guidata(hObject,handles);%Update dataset to handles
 %Resave updated dataset
 Lmatrix=handles.dataset.Lmatrix;
 mask=handles.dataset.mask;
 imagemed=handles.dataset.imagemed;
 measuredValues=handles.dataset.measuredValues;
-save(handles.dataset.filename,'Lmatrix','mask','imagemed','measuredValues');
+filename = handles.dataset.filename;
 
-%Update displayed data
+save(handles.dataset.filename,'Lmatrix','mask','imagemed','measuredValues','filename');
+
+%
+%Plot file
+handles.dataset = load(handles.dataset.filename);
 frameRate=str2double(get(handles.enterframerate,'String'));
 plotResults(handles.dataset.mask,handles.dataset.imagemed,handles.dataset.measuredValues,frameRate,handles);
+assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
 
 %Update listbox containing list of each ROI for selection
 roiNames = nonzeros(unique(handles.dataset.Lmatrix));
@@ -596,4 +596,3 @@ roiNamesStr = num2str(roiNames);
 set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
 set(handles.roi_listbox,'string',roiNamesStr);
 
-%f = msgbox('Not Yet Operational. <3 Travis');
