@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 03-Apr-2018 23:24:14
+% Last Modified by GUIDE v2.5 30-Apr-2018 15:46:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -596,3 +596,11 @@ roiNamesStr = num2str(roiNames);
 set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
 set(handles.roi_listbox,'string',roiNamesStr);
 
+
+% --- Executes on button press in subPixelCorrButton.
+function subPixelCorrButton_Callback(hObject, eventdata, handles)
+% hObject    handle to subPixelCorrButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+subRoiCalculations(handles)
