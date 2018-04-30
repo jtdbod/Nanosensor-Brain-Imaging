@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 30-Apr-2018 15:46:18
+% Last Modified by GUIDE v2.5 30-Apr-2018 16:42:28
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -420,11 +420,29 @@ hold off
 data=handles.dataset.measuredValues;
 for rois=1:size(data,2)
     allTraces(rois,:)=data(rois).dF;
+    roi_labels(rois) = data(rois).ROInum;
 end
 R=corrcoef(allTraces');
 imagesc(R);
 
+clusterIdx = kmeans(R,5);
 
+axes(handles.axes2);
+cla(handles.axes2);
+
+%Plot ROIs color coded by cluster ID
+mask = handles.dataset.Lmatrix;
+for roiIdx = 1:size(clusterIdx,1)
+    roi = roi_labels(roiIdx);
+    mask(find(mask==roi))=clusterIdx(roiIdx); %Replace label with cluster number
+end
+imagesc(mask)
+set(handles.axes2,'Ydir','reverse')
+xlim([0 size(mask,2)])
+ylim([0 size(mask,1)])
+xlabel='';
+ylabel='';
+    
 % --------------------------------------------------------------------
 function edit_Callback(hObject, eventdata, handles)
 % hObject    handle to edit (see GCBO)
