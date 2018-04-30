@@ -149,7 +149,7 @@ if true(FilterIndex)
         else
             filename=strcat(PathName,'/',FileName(1:end-4));
             save(strcat(filename,'.mat'),'Lmatrix','mask','imagemed','measuredValues','filename');
-            handles.dataset = load(filename);
+            handles.dataset = load(strcat(filename,'.mat'));
             guidata(hObject,handles);%To save dataset to handles
             assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
             plotResults(mask,imagemed,measuredValues,frameRate,handles);
@@ -581,11 +581,11 @@ imagemed=handles.dataset.imagemed;
 measuredValues=handles.dataset.measuredValues;
 filename = handles.dataset.filename;
 
-save(handles.dataset.filename,'Lmatrix','mask','imagemed','measuredValues','filename');
+save(strcat(handles.dataset.filename,'.mat'),'Lmatrix','mask','imagemed','measuredValues','filename');
 
 %
 %Plot file
-handles.dataset = load(handles.dataset.filename);
+handles.dataset = load(strcat(handles.dataset.filename,'.mat'));
 frameRate=str2double(get(handles.enterframerate,'String'));
 plotResults(handles.dataset.mask,handles.dataset.imagemed,handles.dataset.measuredValues,frameRate,handles);
 assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace

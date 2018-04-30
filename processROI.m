@@ -21,7 +21,7 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)
         %image=imagestack(:,:,frame)-background;
         image=imagestack(:,:,frame);
 
-        stats=regionprops(Lmatrix,image,'MeanIntensity','WeightedCentroid','Area');
+        stats=regionprops(Lmatrix,image,'MeanIntensity','WeightedCentroid','Area','PixelValues','PixelList');
         numROIs=length(stats);
         for j=1:numROIs
             measuredValues(j).MeanIntensity(frame)=stats(j).MeanIntensity;
@@ -29,6 +29,9 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)
             measuredValues(j).CenterX(frame)=stats(j).WeightedCentroid(1);
             measuredValues(j).CenterY(frame)=stats(j).WeightedCentroid(2);
             measuredValues(j).ROInum=j; 
+            measuredValues(j).PixelValues(frame,:)=[stats(j).PixelValues];
+            measuredValues(j).PixelListRow(frame,:)=[stats(j).PixelList(:,1)]';
+            measuredValues(j).PixelListCol(frame,:)=[stats(j).PixelList(:,2)]';
             %Encode ROInum into structure so that I can easily delete ROIs
             %later and keep numbering the same.
         end
