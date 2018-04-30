@@ -28,6 +28,9 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)
             measuredValues(j).Area(frame)=stats(j).Area;
             measuredValues(j).CenterX(frame)=stats(j).WeightedCentroid(1);
             measuredValues(j).CenterY(frame)=stats(j).WeightedCentroid(2);
+            measuredValues(j).ROInum=j; 
+            %Encode ROInum into structure so that I can easily delete ROIs
+            %later and keep numbering the same.
         end
 
         %fprintf(1,'%d',frame)
