@@ -425,7 +425,8 @@ end
 R=corrcoef(allTraces');
 imagesc(R);
 
-clusterIdx = kmeans(R,5);
+eva = evalclusters(R,'kmeans','CalinskiHarabasz','KList',[1:10]);
+clusterIdx = kmeans(R,eva.OptimalK,'Replicates',5);
 
 axes(handles.axes2);
 cla(handles.axes2);
@@ -440,8 +441,8 @@ imagesc(mask)
 set(handles.axes2,'Ydir','reverse')
 xlim([0 size(mask,2)])
 ylim([0 size(mask,1)])
-xlabel='';
-ylabel='';
+xlabel('');
+ylabel('');
     
 % --------------------------------------------------------------------
 function edit_Callback(hObject, eventdata, handles)
@@ -556,6 +557,7 @@ x=1:length(handles.dataset.measuredValues(roi_index).dF);
 x=x./frameRate;
 y=handles.dataset.measuredValues(roi_index).dF;
 plot(x,y)
+axis tight
 
 % --- Executes during object creation, after setting all properties.
 function roi_listbox_CreateFcn(hObject, eventdata, handles)

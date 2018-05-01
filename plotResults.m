@@ -54,7 +54,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
     end
     xlabel('Time (s)')
     ylabel('dF/F')
-    
+    axis tight
     
     %Plot heat map of all ROI activity using imagesc
     axes(handles.axes3);
