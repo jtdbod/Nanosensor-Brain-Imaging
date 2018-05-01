@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 30-Apr-2018 16:42:28
+% Last Modified by GUIDE v2.5 01-May-2018 11:26:37
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -90,7 +90,7 @@ else
     %set(handles.CurrentFileLoaded, 'String', FileName);
 
     %Plot file
-    plotResults(handles.dataset.mask,handles.dataset.imagemed,handles.dataset.measuredValues,frameRate,handles);
+    plotResults(handles.dataset.mask,handles.dataset.avgStack,handles.dataset.measuredValues,frameRate,handles);
    
     set(handles.CurrentFileLoaded,'String',FileName);
     assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
@@ -107,6 +107,8 @@ function processfilebutton_Callback(hObject, eventdata, handles)
 % hObject    handle to processfilebutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+clear currentDataset handles.dataset %Hopefully fixes slowdown?
 
 frameRate=str2double(get(handles.enterframerate,'String'));
 if true(get(handles.radiobuttonSPE,'Value'))
@@ -141,18 +143,18 @@ if true(FilterIndex)
         end
         strelsize=get(handles.strelSlider,'Value');
         numopens=get(handles.numopens_slider,'Value');
-        [Lmatrix,mask,imagemed]=processImage(imagestack,strelsize,numopens);
+        [Lmatrix,mask,stdStack,avgStack]=processImage(imagestack,strelsize,numopens);
         [measuredValues]=processROI(imagestack,Lmatrix,barhandle,frameRate);
         if isempty(measuredValues)
             %do nothing
             delete(barhandle);
         else
             filename=strcat(PathName,'/',FileName(1:end-4));
-            save(strcat(filename,'.mat'),'Lmatrix','mask','imagemed','measuredValues','filename');
+            save(strcat(filename,'.mat'),'Lmatrix','mask','stdStack','avgStack','measuredValues','filename');
             handles.dataset = load(strcat(filename,'.mat'));
             guidata(hObject,handles);%To save dataset to handles
             assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
-            plotResults(mask,imagemed,measuredValues,frameRate,handles);
+            plotResults(mask,avgStack,measuredValues,frameRate,handles);
             delete(barhandle);
         end
 
@@ -547,12 +549,10 @@ roi_selected=str2num(roi_names(roi_selected_value,:));
 
 %Find ROI name that matches selected value
 roi_index=find([handles.dataset.measuredValues.ROInum]==roi_selected);
-
 axes(handles.axes2)
 cla(handles.axes2)
+set(handles.axes2,'Ydir','normal')
 frameRate=str2double(get(handles.enterframerate,'String'));
-
-
 x=1:length(handles.dataset.measuredValues(roi_index).dF);
 x=x./frameRate;
 y=handles.dataset.measuredValues(roi_index).dF;
@@ -597,17 +597,18 @@ guidata(hObject,handles);%Update dataset to handles
 %Resave updated dataset
 Lmatrix=handles.dataset.Lmatrix;
 mask=handles.dataset.mask;
-imagemed=handles.dataset.imagemed;
+stdStack=handles.dataset.stdStack;
 measuredValues=handles.dataset.measuredValues;
 filename = handles.dataset.filename;
+avgStack = handles.dataset.avgStack;
 
-save(strcat(handles.dataset.filename,'.mat'),'Lmatrix','mask','imagemed','measuredValues','filename');
+save(strcat(handles.dataset.filename,'.mat'),'Lmatrix','mask','stdStack','avgStack','measuredValues','filename');
 
 %
 %Plot file
 handles.dataset = load(strcat(handles.dataset.filename,'.mat'));
 frameRate=str2double(get(handles.enterframerate,'String'));
-plotResults(handles.dataset.mask,handles.dataset.imagemed,handles.dataset.measuredValues,frameRate,handles);
+plotResults(handles.dataset.mask,handles.dataset.avgStack,handles.dataset.measuredValues,frameRate,handles);
 assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
 
 %Update listbox containing list of each ROI for selection
@@ -624,3 +625,26 @@ function subPixelCorrButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 subRoiCalculations(handles)
+
+
+% --- Executes on button press in plotImageStacks.
+function plotImageStacks_Callback(hObject, eventdata, handles)
+% hObject    handle to plotImageStacks (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+axes(handles.axes2)
+cla(handles.axes2)
+set(handles.axes2,'Ydir','reverse')
+
+imagesc(handles.dataset.stdStack);
+ylabel('');
+xlabel('Avg. Normalized STD Stack');
+
+axes(handles.axes3)
+cla(handles.axes3)
+set(handles.axes3,'Ydir','reverse')
+
+imagesc(handles.dataset.avgStack);
+ylabel('');
+xlabel('Avg. Stack');

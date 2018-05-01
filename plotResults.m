@@ -1,4 +1,4 @@
-function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
+function []=plotResults(mask,avgImage,measuredValues,frameRate, handles)
 
     %Plot the ROI overlay figure
     currFig = gcf;
@@ -7,7 +7,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
     
     cidx = 0;
     roi_list = nonzeros(unique(handles.dataset.Lmatrix));
-    imagesc(imagemed); hold on;
+    imagesc(avgImage); hold on;
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
         roi_mask = handles.dataset.Lmatrix;
@@ -34,6 +34,7 @@ function []=plotResults(mask,imagemed,measuredValues,frameRate, handles)
     %Plot all dF/F traces
     axes(handles.axes2);
     cla(handles.axes2);
+    set(handles.axes3,'Ydir','normal')
     hold on
     for tracenum=1:size(measuredValues,2)
         signal = measuredValues(tracenum).dF;
