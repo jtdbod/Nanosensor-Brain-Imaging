@@ -120,8 +120,6 @@ end
 file = struct('name',FileName); %Convert to structure for consistency with batch processing code
 if true(FilterIndex)
     
-    %file.name = strcat(PathName,'/',FileName);
-    %fprintf(1,'Processing file ')
         if strmatch(fileType,'spe')
             %Make progress bar
             barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File 1 of 1'),...
@@ -427,7 +425,9 @@ end
 R=corrcoef(allTraces');
 imagesc(R);
 
-eva = evalclusters(R,'kmeans','CalinskiHarabasz','KList',[1:10]);
+R(isnan(R))=0;
+
+eva = evalclusters(R,'kmeans','DaviesBouldin','KList',[1:10]);
 clusterIdx = kmeans(R,eva.OptimalK,'Replicates',5);
 
 axes(handles.axes2);

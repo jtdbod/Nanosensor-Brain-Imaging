@@ -17,12 +17,17 @@ pixelValues = handles.dataset.measuredValues(roi_num).PixelValues;
 F0=mean(pixelValues(1:floor((size(pixelValues,1)*.05)),:),1);
 pixelValuesNormed = (pixelValues-F0)./F0;
 
+
+
 R = corrcoef(pixelValuesNormed);
+%Remove NaN values so it doesn't mess up calculations later
+R(isnan(R))=0;
+
 %R = gpuArray(R);
 % rows = observations (frame number); columns = variables (pixels).
 
 %Run k-means clustering on correlation coefficients to 
-eva = evalclusters(R,'kmeans','CalinskiHarabasz','KList',[1:5]);
+eva = evalclusters(R,'kmeans','DaviesBouldin','KList',[1:5]);
 clusterIdx = kmeans(R,eva.OptimalK,'Replicates',5);
 
 %Plot ROIs with pixel intensity corresponding to cluster index
@@ -36,7 +41,6 @@ for pixidx=1:size(pixelValues,2)
     imagesc(image');
 end
 
-disp('test')
 imagesc(image');
 set(handles.axes3,'Ydir','reverse')
 xlim([0 size(image,1)])
