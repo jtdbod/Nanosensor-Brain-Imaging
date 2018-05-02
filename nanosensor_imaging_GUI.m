@@ -435,9 +435,11 @@ cla(handles.axes2);
 
 %Plot ROIs color coded by cluster ID
 mask = handles.dataset.Lmatrix;
+
 for roiIdx = 1:size(clusterIdx,1)
     roi = roi_labels(roiIdx);
     mask(find(mask==roi))=clusterIdx(roiIdx); %Replace label with cluster number
+    hold all
 end
 imagesc(mask)
 set(handles.axes2,'Ydir','reverse')
