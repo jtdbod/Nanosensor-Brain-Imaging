@@ -351,31 +351,6 @@ function radiobuttonTIF_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of radiobuttonTIF
 
 
-% --- Executes on button press in selectROI.
-function selectROI_Callback(hObject, eventdata, handles)
-% hObject    handle to selectROI (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-axes(handles.axes1);
-roicoordinates=ginput(1);
-d=[floor(roicoordinates(1)),floor(roicoordinates(2))];
-selectedROI=handles.dataset.Lmatrix(d(2),d(1));
-    if selectedROI == 0
-        return
-    else
-    axes(handles.axes2);
-    hold off
-    x=1:size(handles.dataset.measuredValues(selectedROI).MeanIntensity,2);
-    frameRate=str2double(get(handles.enterframerate,'String'));
-    
-    x=x./frameRate;
-    plot(x,handles.dataset.measuredValues(selectedROI).dF);
-    xlabel('Time (s)');
-    ylabel('dF/F')
-    title(sprintf('ROI: %s',num2str(selectedROI)));
-end
-
-
 % --- Executes on button press in CloseAll.
 function CloseAll_Callback(hObject, eventdata, handles)
 % hObject    handle to CloseAll (see GCBO)
@@ -570,6 +545,48 @@ y=handles.dataset.measuredValues(roi_index).dF;
 plot(x,y)
 axis tight
 
+%Highlight the selected ROI.
+
+%Plot the ROI overlay figure
+currFig = gcf;
+axes(handles.axes1);
+cla(handles.axes1);
+
+%Decide whether to use mask generated from file or Lmatrix mask from
+%previously loaded video.
+if true(get(handles.useCurrentROIs,'Value'))
+    roi_list = nonzeros(unique(handles.LmatrixFIXED));
+    mask = handles.LmatrixFIXED;
+else
+    roi_list = nonzeros(unique(handles.dataset.Lmatrix));
+    mask = handles.dataset.Lmatrix;
+end
+imagesc(handles.dataset.avgStack); hold on;
+for roi_index=1:length(roi_list)
+    roi = roi_list(roi_index);
+    if roi == roi_selected
+        color = 'r';
+    else
+        color = 'k';
+    end
+    roi_mask = mask;
+    roi_mask(find(roi_mask~=roi))=0;
+    [B,L,N,A] = bwboundaries(roi_mask,'noholes');
+    for k=1:length(B),
+      boundary = B{k};
+      %cidx = mod(k,length(colors))+1;
+      plot(boundary(:,2), boundary(:,1),...
+           color,'LineWidth',1);
+      %randomize text position for better visibility
+      rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
+      col = boundary(rndRow,2); row = boundary(rndRow,1);
+      %h = text(col+1, row-1, num2str(L(row,col)));
+      h = text(col+1, row-1, num2str(roi));
+      set(h,'Color',color,'FontSize',14);
+    end
+
+end
+
 % --- Executes during object creation, after setting all properties.
 function roi_listbox_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to roi_listbox (see GCBO)
@@ -589,6 +606,16 @@ function delete_roi_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%Make "PLEASE WAIT" indicator
+
+axes(handles.axes2);
+cla(handles.axes2);
+xlimits = get(handles.axes2,'XLim');
+ylimits = get(handles.axes2,'YLim');
+xpos = (xlimits(2)-xlimits(1))/2;
+ypos = (ylimits(2)-ylimits(1))/2;
+text(xpos,ypos,'PLEASE WAIT','HorizontalAlignment','Center');
+
 roi_selected_value = get(handles.roi_listbox,'Value'); %Number of selected element
 roi_names = get(handles.roi_listbox,'string'); %Name of ROI selected (using roi_selected_value as index)
 roi_selected=str2num(roi_names(roi_selected_value,:));
@@ -603,7 +630,14 @@ roi_index=find([handles.dataset.measuredValues.ROInum]==roi_selected);
 
 handles.dataset.measuredValues(roi_index)=[];
 handles.dataset.Lmatrix(handles.dataset.Lmatrix==roi_selected)=0;
-handles.dataset.mask(handles.dataset.Lmatrix==roi_selected)=0;
+if true(get(handles.useCurrentROIs,'Value'))
+    handles.LmatrixFIXED(handles.LmatrixFIXED==roi_selected)=0;
+    %For when processing is done with a loaded ROI mask instead of generated
+    %ROIs
+else
+    handles.dataset.mask(handles.dataset.Lmatrix==roi_selected)=0;
+    %For when ROI mask is generated from the file being analyzed.
+end
 guidata(hObject,handles);%Update dataset to handles
 %Resave updated dataset
 Lmatrix=handles.dataset.Lmatrix;
@@ -623,7 +657,15 @@ plotResults(handles.dataset.mask,handles.dataset.avgStack,handles.dataset.measur
 assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
 
 %Update listbox containing list of each ROI for selection
-roiNames = nonzeros(unique(handles.dataset.Lmatrix));
+if true(get(handles.useCurrentROIs,'Value'))
+    Lmatrix = handles.LmatrixFIXED;
+    %For when processing is done with a loaded ROI mask instead of generated
+    %ROIs
+else
+    Lmatrix = handles.dataset.Lmatrix;
+    %For when ROI mask is generated from the file being analyzed.
+end
+roiNames = nonzeros(unique(Lmatrix));
 roiNamesStr = num2str(roiNames);
 set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
 set(handles.roi_listbox,'string',roiNamesStr);
