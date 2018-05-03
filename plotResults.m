@@ -6,11 +6,20 @@ function []=plotResults(mask,avgImage,measuredValues,frameRate, handles)
     cla(handles.axes1);
     
     cidx = 0;
-    roi_list = nonzeros(unique(handles.dataset.Lmatrix));
+    
+    %Decide whether to use mask generated from file or Lmatrix mask from
+    %previously loaded video.
+    if true(get(handles.useCurrentROIs,'Value'))
+        roi_list = nonzeros(unique(handles.LmatrixFIXED));
+        mask = handles.LmatrixFIXED;
+    else
+        roi_list = nonzeros(unique(handles.dataset.Lmatrix));
+        mask = handles.dataset.Lmatrix;
+    end
     imagesc(avgImage); hold on;
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
-        roi_mask = handles.dataset.Lmatrix;
+        roi_mask = mask;
         roi_mask(find(roi_mask~=roi))=0;
         [B,L,N,A] = bwboundaries(roi_mask,'noholes');
         colors=['b' 'g' 'r' 'c' 'm' 'y'];
@@ -34,7 +43,7 @@ function []=plotResults(mask,avgImage,measuredValues,frameRate, handles)
     %Plot all dF/F traces
     axes(handles.axes2);
     cla(handles.axes2);
-    set(handles.axes3,'Ydir','normal')
+    set(handles.axes2,'Ydir','normal')
     hold on
     for tracenum=1:size(measuredValues,2)
         signal = measuredValues(tracenum).dF;

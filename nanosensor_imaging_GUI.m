@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 01-May-2018 11:26:37
+% Last Modified by GUIDE v2.5 03-May-2018 15:35:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -141,21 +141,30 @@ if true(FilterIndex)
         end
         strelsize=get(handles.strelSlider,'Value');
         numopens=get(handles.numopens_slider,'Value');
+        
         [Lmatrix,mask,stdStack,avgStack]=processImage(imagestack,strelsize,numopens);
-        [measuredValues]=processROI(imagestack,Lmatrix,barhandle,frameRate);
+        if true(get(handles.useCurrentROIs,'Value'))
+            [measuredValues]=processROI(imagestack,handles.LmatrixFIXED,barhandle,frameRate);
+            mask = handles.LmatrixFIXED; %Update mask displayed to represent the "saved" ROIs used for this analysis.
+            mask(find(mask))=1; %Need to udpate this eventually so ROIs are not calculated for new video and then thrown away.
+        else
+            [measuredValues]=processROI(imagestack,Lmatrix,barhandle,frameRate);
+        end
         if isempty(measuredValues)
             %do nothing
             delete(barhandle);
+
         else
             filename=strcat(PathName,'/',FileName(1:end-4));
             save(strcat(filename,'.mat'),'Lmatrix','mask','stdStack','avgStack','measuredValues','filename');
             handles.dataset = load(strcat(filename,'.mat'));
+            
             guidata(hObject,handles);%To save dataset to handles
             assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
             plotResults(mask,avgStack,measuredValues,frameRate,handles);
             delete(barhandle);
         end
-
+        
 
         %Generate listbox containing list of each ROI for selection
         roiNames = nonzeros(unique(handles.dataset.Lmatrix));
@@ -650,3 +659,41 @@ set(handles.axes3,'Ydir','reverse')
 imagesc(handles.dataset.avgStack);
 ylabel('');
 xlabel('Avg. Stack');
+
+
+% --- Executes on button press in useCurrentROIs.
+function useCurrentROIs_Callback(hObject, eventdata, handles)
+% hObject    handle to useCurrentROIs (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of useCurrentROIs
+
+isSelected = get(handles.useCurrentROIs,'Value');
+
+if isempty(get(handles.CurrentFileLoaded,'String'));
+    disp('No ROI mask loaded')
+else
+
+end
+
+
+% --- Executes on button press in loadMaskButton.
+function loadMaskButton_Callback(hObject, eventdata, handles)
+% hObject    handle to loadMaskButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+%Sets a Lmatrix, aka ROI mask, that stays constant until changed and can be
+%used to analyze other videos and overrides the ROI generation for that
+%video.
+[FileName,PathName,FilterIndex] = uigetfile('*.mat');
+
+if isequal(FileName,0)
+    %Do nothing
+else
+    dataset = load(strcat(PathName,'/',FileName));
+    handles.LmatrixFIXED = dataset.Lmatrix;
+    guidata(hObject,handles);%To save LmatrixFIXED to handles
+end
