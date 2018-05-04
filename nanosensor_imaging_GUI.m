@@ -236,6 +236,26 @@ function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
 frameRate = get(hObject,'String');
 frameRate = str2double(frameRate);
 
+%Future code for mining metadata
+%{
+fileID = fopen(filename,'r');
+
+metadataText = textscan(fileID,'%s  %f','delimiter',',');
+
+expression = '"ElapsedTime-ms": [0-9]+';
+matches = regexp(metadataText{1},expression,'match');
+matches = matches(~cellfun('isempty',matches));
+
+expression = '[0-9]+';
+timePoints = regexp(string(matches),expression,'match');
+
+timePointsStr = string(timePoints);
+
+x = str2double(timePointsStr);
+
+fclose(fileID)
+%}
+
 % --- Executes during object creation, after setting all properties.
 function enterframerate_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to enterframerate (see GCBO)
