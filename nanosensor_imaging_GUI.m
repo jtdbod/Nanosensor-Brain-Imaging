@@ -84,6 +84,7 @@ if isequal(FileName,0)
     %Do nothing
 else
     handles.dataset = load(strcat(PathName,'/',FileName));
+    handles.dataset.filename = strcat(strcat(PathName,'/',FileName));
     guidata(hObject,handles);%To save dataset to handles
     frameRate=str2double(get(handles.enterframerate,'String'));
     %CurrentFileLoaded();
@@ -118,6 +119,7 @@ elseif true(get(handles.radiobuttonTIF,'Value'))
 end
 [FileName,PathName,FilterIndex] = uigetfile(strcat('*.',fileType));
 file = struct('name',FileName); %Convert to structure for consistency with batch processing code
+handles.dataset.filename = strcat(PathName,'/',FileName);
 if true(FilterIndex)
     
         if strmatch(fileType,'spe')
@@ -233,6 +235,11 @@ function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of enterframerate as text
 %        str2double(get(hObject,'String')) returns contents of enterframerate as a double
+
+%Look to see if metadata exists
+
+%exist(strcat(handles.dataset.filename,'.txt');
+
 frameRate = get(hObject,'String');
 frameRate = str2double(frameRate);
 
@@ -697,7 +704,7 @@ function subPixelCorrButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-subRoiCalculations(handles)
+subRoiCalculationsCorr(handles)
 
 
 % --- Executes on button press in plotImageStacks.

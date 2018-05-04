@@ -1,4 +1,4 @@
-function subRoiCalculations(handles)
+function subRoiCalculationsCorr(handles)
 axes(handles.axes3);
 cla(handles.axes3);
 image = zeros(512,512);
