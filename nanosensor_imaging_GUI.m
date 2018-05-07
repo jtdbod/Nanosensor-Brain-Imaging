@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 03-May-2018 15:35:52
+% Last Modified by GUIDE v2.5 04-May-2018 15:13:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -766,3 +766,21 @@ else
     handles.LmatrixFIXED = dataset.Lmatrix;
     guidata(hObject,handles);%To save LmatrixFIXED to handles
 end
+
+
+% --- Executes on button press in subRoiMaxDfnorm.
+function subRoiMaxDfnorm_Callback(hObject, eventdata, handles)
+% hObject    handle to subRoiMaxDfnorm (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+subRoiCalculationsMaxdF(handles);
+
+
+% --- Executes on button press in subROITime2Peak.
+function subROITime2Peak_Callback(hObject, eventdata, handles)
+% hObject    handle to subROITime2Peak (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+subRoiCalculationsTime2Peak(handles);
