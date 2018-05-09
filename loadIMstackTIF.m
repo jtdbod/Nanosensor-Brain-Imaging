@@ -11,8 +11,6 @@ function [imagestack,filename]=loadIMstackTIF(folder,files,i,h) %Load image stac
 
     for j=1:frames
         imagestack(:,:,j)=imread(filename,j);   
-        fprintf(1,'%d',j)
-        fprintf(1,repmat('\b',1,length(num2str(j))))
                 % Check for Cancel button press
         if getappdata(h,'canceling')
             delete(h)
