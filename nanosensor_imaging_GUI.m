@@ -190,7 +190,8 @@ elseif true(get(handles.radiobuttonTIF,'Value'))
 end
 strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
-batchProcessVideos(fileType,frameRate,strelsize,numopens,handles);
+handles = batchProcessVideos(fileType,frameRate,strelsize,numopens,handles);
+guidata(hObject,handles);%To save dataset to handles
 
 % --- Executes on button press in driftcheck.
 function driftcheck_Callback(hObject, eventdata, handles)
@@ -420,7 +421,7 @@ end
 
 
 % --- Executes on button press in CorrelationMatrix.
-function CorrelationMatrix_Callback(hObject, eventdata, handles)
+function CorrelationMatrix_Callback(~, eventdata, handles)
 % hObject    handle to CorrelationMatrix (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
