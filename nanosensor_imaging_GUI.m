@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 04-May-2018 15:13:51
+% Last Modified by GUIDE v2.5 10-May-2018 16:57:16
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -569,7 +569,12 @@ set(handles.axes2,'Ydir','normal')
 frameRate=str2double(get(handles.enterframerate,'String'));
 x=1:length(handles.dataset.measuredValues(roi_index).dF);
 x=x./frameRate;
-y=handles.dataset.measuredValues(roi_index).dF;
+if get(handles.medianBaselineFilter,'Value') %Subtract median filter for baseline correction (optional)
+    traceFilt = medfilt1(handles.dataset.measuredValues(roi_index).dF,50);
+    y=smooth(handles.dataset.measuredValues(roi_index).dF,5)-traceFilt';
+else
+    y=handles.dataset.measuredValues(roi_index).dF;
+end
 plot(x,y)
 axis tight
 
@@ -785,3 +790,12 @@ function subROITime2Peak_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 subRoiCalculationsTime2Peak(handles);
+
+
+% --- Executes on button press in medianBaselineFilter.
+function medianBaselineFilter_Callback(hObject, eventdata, handles)
+% hObject    handle to medianBaselineFilter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of medianBaselineFilter

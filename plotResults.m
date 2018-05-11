@@ -56,6 +56,9 @@ function []=plotResults(mask,avgImage,measuredValues,frameRate, handles)
             signal = measuredValues(tracenum).dF;
             traces(tracenum,:)=signal;
         end
+        
+
+        
         x = 1:size(traces,2);
         x=x./frameRate;
         for trace=1:size(traces,1)
