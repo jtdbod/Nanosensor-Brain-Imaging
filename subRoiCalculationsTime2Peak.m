@@ -4,6 +4,7 @@ cla(handles.axes3);
 image = zeros(512,512);
 %Use ROI selected in listbox
 
+
 roi_selected_value = get(handles.roi_listbox,'Value'); %Number of selected element
 roi_names = get(handles.roi_listbox,'string'); %Name of ROI selected (using roi_selected_value as index)
 roi_num=str2num(roi_names(roi_selected_value,:));

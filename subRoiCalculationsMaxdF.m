@@ -1,6 +1,7 @@
 function subRoiCalculationsMaxdF(handles)
 axes(handles.axes3);
 cla(handles.axes3);
+
 image = zeros(512,512);
 %Use ROI selected in listbox
 

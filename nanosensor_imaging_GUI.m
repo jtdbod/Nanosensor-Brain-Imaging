@@ -584,7 +584,6 @@ axis tight
 currFig = gcf;
 axes(handles.axes1);
 cla(handles.axes1);
-
 %Decide whether to use mask generated from file or Lmatrix mask from
 %previously loaded video.
 if true(get(handles.useCurrentROIs,'Value'))
