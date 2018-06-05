@@ -77,6 +77,9 @@ function loadbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to loadbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 
+%Define colormap (Gem adapted from ImageJ, Abraham's favorite)
+colormap(defineGemColormap);
+
 %Load file
 [FileName,PathName,FilterIndex] = uigetfile('*.mat');
 

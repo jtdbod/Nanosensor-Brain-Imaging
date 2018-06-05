@@ -12,8 +12,8 @@ function [Lmatrix,mask,stdStack,meanStack]=processImage(imagestack,strelsize,num
     dfStackMaxSmoothNorm = dfStackMaxSmooth./max(dfStackMaxSmooth(:));
     
     
-    T=adaptthresh(dfStackMaxSmoothNorm,0.1,...
-        'ForegroundPolarity','bright','neigh',51);
+    %T=adaptthresh(dfStackMaxSmoothNorm,0.1,...
+        %'ForegroundPolarity','bright','neigh',51);
     T=graythresh(dfStackMaxSmoothNorm)*1.25;
     mask1 = imbinarize(dfStackMaxSmoothNorm, T); %Threshold image
     se = strel('disk',strelsize);
