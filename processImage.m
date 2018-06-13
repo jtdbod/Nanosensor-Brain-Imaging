@@ -1,10 +1,10 @@
-function [Lmatrix,mask,stdStack,meanStack]=processImage(imagestack,strelsize,numopens)
+function [Lmatrix,mask,stdStack,meanStack,dfStackMaxSmoothNorm]=processImage(imagestack,strelsize,numopens,handles)
     %Test for negative pixel values and correct.
     if any(imagestack(:)<0)
         imagestack = imagestack-min(imagestack(:));
     end
     
-    baselineFrames = 0.05*size(imagestack,3);
+    baselineFrames = floor(0.05*size(imagestack,3));
     f0 = mean(imagestack(:,:,1:baselineFrames),3);
     dFstack = (imagestack-f0);
     dfStackMax = max(dFstack,[],3);
@@ -12,16 +12,8 @@ function [Lmatrix,mask,stdStack,meanStack]=processImage(imagestack,strelsize,num
     dfStackMaxSmoothNorm = dfStackMaxSmooth./max(dfStackMaxSmooth(:));
     
     
-    %T=adaptthresh(dfStackMaxSmoothNorm,0.1,...
-        %'ForegroundPolarity','bright','neigh',51);
-    T=graythresh(dfStackMaxSmoothNorm)*1.25;
-    mask1 = imbinarize(dfStackMaxSmoothNorm, T); %Threshold image
-    se = strel('disk',strelsize);
-    mask2 = imdilate(mask1,se); %Expands ROIs by "strelsize" provided by user
-    mask = mask2;
 
-    CC = bwconncomp(mask);
-    Lmatrix = labelmatrix(CC);
+    [Lmatrix,mask]=calculateMask(dfStackMaxSmoothNorm,strelsize,handles);
 
     
     imagestd = std(imagestack,[],3); %Calculate standard deviation image
@@ -29,13 +21,13 @@ function [Lmatrix,mask,stdStack,meanStack]=processImage(imagestack,strelsize,num
     
     imagestdsmooth = medfilt2(imagestd); %Remove noise
     imagemeansmooth=medfilt2(imagemean); %Remove noise
+
+    
+    stdStack = imagestdsmooth;
     meanStack = imagemeansmooth;
     
-    stdStack = imagestd;
-    avgStack = meanStack;
     
-    
-    %ORIGINAL CODE. TEST CODE IS ABOVE
+    %ORIGINAL CODE
     %{
     imagestd = std(imagestack,[],3); %Calculate standard deviation image
     imagemean = mean(imagestack,3); %Calculate average image

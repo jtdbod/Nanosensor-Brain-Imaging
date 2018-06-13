@@ -1,35 +1,35 @@
-function varargout = nanosensor_imaging_GUI(varargin)
-% NANOSENSOR_IMAGING_GUI MATLAB code for nanosensor_imaging_GUI.fig
-%      NANOSENSOR_IMAGING_GUI, by itself, creates a new NANOSENSOR_IMAGING_GUI or raises the existing
+function varargout = nanosensor_imaging_GUI_v2(varargin)
+% NANOSENSOR_IMAGING_GUI_V2 MATLAB code for nanosensor_imaging_GUI_v2.fig
+%      NANOSENSOR_IMAGING_GUI_V2, by itself, creates a new NANOSENSOR_IMAGING_GUI_V2 or raises the existing
 %      singleton*.
 %
-%      H = NANOSENSOR_IMAGING_GUI returns the handle to a new NANOSENSOR_IMAGING_GUI or the handle to
+%      H = NANOSENSOR_IMAGING_GUI_V2 returns the handle to a new NANOSENSOR_IMAGING_GUI_V2 or the handle to
 %      the existing singleton*.
 %
-%      NANOSENSOR_IMAGING_GUI('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in NANOSENSOR_IMAGING_GUI.M with the given input arguments.
+%      NANOSENSOR_IMAGING_GUI_V2('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in NANOSENSOR_IMAGING_GUI_V2.M with the given input arguments.
 %
-%      NANOSENSOR_IMAGING_GUI('Property','Value',...) creates a new NANOSENSOR_IMAGING_GUI or raises the
+%      NANOSENSOR_IMAGING_GUI_V2('Property','Value',...) creates a new NANOSENSOR_IMAGING_GUI_V2 or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before nanosensor_imaging_GUI_OpeningFcn gets called.  An
+%      applied to the GUI before nanosensor_imaging_GUI_v2_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to nanosensor_imaging_GUI_OpeningFcn via varargin.
+%      stop.  All inputs are passed to nanosensor_imaging_GUI_v2_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help nanosensor_imaging_GUI
+% Edit the above text to modify the response to help nanosensor_imaging_GUI_v2
 
-% Last Modified by GUIDE v2.5 10-May-2018 16:57:16
+% Last Modified by GUIDE v2.5 13-Jun-2018 13:49:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @nanosensor_imaging_GUI_OpeningFcn, ...
-                   'gui_OutputFcn',  @nanosensor_imaging_GUI_OutputFcn, ...
+                   'gui_OpeningFcn', @nanosensor_imaging_GUI_v2_OpeningFcn, ...
+                   'gui_OutputFcn',  @nanosensor_imaging_GUI_v2_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,26 +44,26 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before nanosensor_imaging_GUI is made visible.
-function nanosensor_imaging_GUI_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before nanosensor_imaging_GUI_v2 is made visible.
+function nanosensor_imaging_GUI_v2_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to nanosensor_imaging_GUI (see VARARGIN)
+% varargin   command line arguments to nanosensor_imaging_GUI_v2 (see VARARGIN)
 
-% Choose default command line output for nanosensor_imaging_GUI
+% Choose default command line output for nanosensor_imaging_GUI_v2
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes nanosensor_imaging_GUI wait for user response (see UIRESUME)
+% UIWAIT makes nanosensor_imaging_GUI_v2 wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = nanosensor_imaging_GUI_OutputFcn(hObject, eventdata, handles) 
+function varargout = nanosensor_imaging_GUI_v2_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -106,15 +106,22 @@ else
     set(handles.roi_listbox,'string',roiNamesStr);
     
 end
-% --- Executes on button press in processfilebutton.
-function processfilebutton_Callback(hObject, eventdata, handles)
-% hObject    handle to processfilebutton (see GCBO)
+
+% --- Executes during object creation, after setting all properties.
+function LoadStack_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to LoadStack (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% --- Executes on button press in LoadStack.
+function LoadStack_Callback(hObject, eventdata, handles)
+% hObject    handle to LoadStack (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 clear currentDataset handles.dataset %Hopefully fixes slowdown?
 
-frameRate=str2double(get(handles.enterframerate,'String'));
+
 if true(get(handles.radiobuttonSPE,'Value'))
     fileType = 'spe';
 elseif true(get(handles.radiobuttonTIF,'Value'))
@@ -123,6 +130,7 @@ end
 [FileName,PathName,FilterIndex] = uigetfile(strcat('*.',fileType));
 file = struct('name',FileName); %Convert to structure for consistency with batch processing code
 handles.dataset.filename = strcat(PathName,'/',FileName);
+handles.dataset.frameRate = str2double(get(handles.enterframerate,'String'));
 if true(FilterIndex)
     
         if strmatch(fileType,'spe')
@@ -132,7 +140,11 @@ if true(FilterIndex)
                     'setappdata(gcbf,''canceling'',1)');
             setappdata(barhandle,'canceling',0)
 
-            [imagestack,filename]=loadIMstackSPE(PathName,file,1,barhandle);
+            [handles.dataset.imagestack,filename]=loadIMstackSPE(PathName,file,1,barhandle);
+            %Display first frame after file loads.
+            axes(handles.axes1);
+            cla(handles.axes1);
+            imagesc(handles.dataset.imagestack(:,:,1));
         elseif strmatch(fileType,'tif')
             %Make progress bar
             barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
@@ -140,44 +152,74 @@ if true(FilterIndex)
                     'setappdata(gcbf,''canceling'',1)');
             setappdata(barhandle,'canceling',0)
 
-            [imagestack,filename]=loadIMstackTIF(PathName,file,1,barhandle);
+            [handles.dataset.imagestack,filename]=loadIMstackTIF(PathName,file,1,barhandle);
+            %Display first frame after file loads.
+            axes(handles.axes1);
+            cla(handles.axes1);
+            imagesc(handles.dataset.imagestack(:,:,1));
         else
             error('Error. Filetype must be "tif" or "spe"');
         end
-        strelsize=get(handles.strelSlider,'Value');
-        numopens=get(handles.numopens_slider,'Value');
-        
-        [Lmatrix,mask,stdStack,avgStack]=processImage(imagestack,strelsize,numopens);
-        if true(get(handles.useCurrentROIs,'Value'))
-            [measuredValues]=processROI(imagestack,handles.LmatrixFIXED,barhandle,frameRate);
-            mask = handles.LmatrixFIXED; %Update mask displayed to represent the "saved" ROIs used for this analysis.
-            mask(find(mask))=1; %Need to udpate this eventually so ROIs are not calculated for new video and then thrown away.
-        else
-            [measuredValues]=processROI(imagestack,Lmatrix,barhandle,frameRate);
-        end
-        if isempty(measuredValues)
-            %do nothing
-            delete(barhandle);
-
-        else
-            filename=strcat(PathName,'/',FileName(1:end-4));
-            save(strcat(filename,'.mat'),'Lmatrix','mask','stdStack','avgStack','measuredValues','filename');
-            handles.dataset = load(strcat(filename,'.mat'));
-            
-            guidata(hObject,handles);%To save dataset to handles
-            assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
-            plotResults(mask,avgStack,measuredValues,frameRate,handles);
-            delete(barhandle);
-        end
-        
-
-        %Generate listbox containing list of each ROI for selection
-        roiNames = nonzeros(unique(handles.dataset.Lmatrix));
-        roiNamesStr = num2str(roiNames);
-        set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
-        set(handles.roi_listbox,'string',roiNamesStr);
+delete(barhandle);
+guidata(hObject,handles);%To save dataset to handles
+assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
 end
 
+
+% --- Executes on button press in processfilebutton.
+function processfilebutton_Callback(hObject, eventdata, handles)
+% hObject    handle to processfilebutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+if isfield(handles.dataset,'imagestack')
+    %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
+    colormap(defineGemColormap);
+    %Make progress bar
+    barhandle = waitbar(0,'ROI processing. Frame %i of %i','Name',sprintf('Processing File 1 of 1'),...
+            'CreateCancelBtn',...
+            'setappdata(gcbf,''canceling'',1)');
+    setappdata(barhandle,'canceling',0)
+
+
+    strelsize=get(handles.strelSlider,'Value');
+    numopens=get(handles.numopens_slider,'Value');
+
+    [Lmatrix,mask,stdStack,avgStack,dfStackMaxSmoothNorm]=processImage(handles.dataset.imagestack,strelsize,numopens,handles);
+    if true(get(handles.useCurrentROIs,'Value'))
+        [measuredValues]=processROI(imagestack,handles.LmatrixFIXED,barhandle,handles.dataset.frameRate);
+        mask = handles.LmatrixFIXED; %Update mask displayed to represent the "saved" ROIs used for this analysis.
+        mask(find(mask))=1; %Need to udpate this eventually so ROIs are not calculated for new video and then thrown away.
+    else
+        [measuredValues]=processROI(handles.dataset.imagestack,Lmatrix,barhandle,handles.dataset.frameRate);
+    end
+    if isempty(measuredValues)
+        %do nothi
+        delete(barhandle);
+
+    else
+        filename=handles.dataset.filename;
+        frameRate = str2double(get(handles.enterframerate,'String'));
+        save(strcat(filename,'.mat'),'Lmatrix','mask','stdStack','avgStack','dfStackMaxSmoothNorm','measuredValues','filename','frameRate');
+        handles.dataset = load(strcat(filename,'.mat'));
+
+        guidata(hObject,handles);%To save dataset to handles
+        assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
+        plotResults(mask,avgStack,measuredValues,frameRate,handles);
+        delete(barhandle);
+    end
+else
+    error('Please load imagestack first.')
+end
+
+
+
+%Generate listbox containing list of each ROI for selection
+roiNames = nonzeros(unique(handles.dataset.Lmatrix));
+roiNamesStr = num2str(roiNames);
+set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
+set(handles.roi_listbox,'string',roiNamesStr);
 
 
 % --- Executes on button press in batchprocessbutton.
@@ -196,41 +238,6 @@ numopens=get(handles.numopens_slider,'Value');
 handles = batchProcessVideos(fileType,frameRate,strelsize,numopens,handles);
 guidata(hObject,handles);%To save dataset to handles
 
-% --- Executes on button press in driftcheck.
-function driftcheck_Callback(hObject, eventdata, handles)
-% hObject    handle to driftcheck (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of driftcheck
-
-% --- Executes on button press in spikecheck.
-function spikecheck_Callback(hObject, eventdata, handles)
-% hObject    handle to spikecheck (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of spikecheck
-
-function edit2_Callback(hObject, eventdata, handles)
-% hObject    handle to edit2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit2 as text
-%        str2double(get(hObject,'String')) returns contents of edit2 as a double
-
-% --- Executes during object creation, after setting all properties.
-function edit2_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit2 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
 % hObject    handle to enterframerate (see GCBO)
@@ -244,8 +251,8 @@ function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
 
 %exist(strcat(handles.dataset.filename,'.txt');
 
-frameRate = get(hObject,'String');
-frameRate = str2double(frameRate);
+handles.dataset.frameRate = str2double(get(hObject,'String'));
+
 
 %Future code for mining metadata
 %{
@@ -461,7 +468,7 @@ set(handles.axes2,'Ydir','reverse')
 xlim([0 size(mask,2)])
 ylim([0 size(mask,1)])
 xlabel('');
-ylabel('');
+ylabel('');frame
     
 % --------------------------------------------------------------------
 function edit_Callback(hObject, eventdata, handles)
@@ -602,7 +609,7 @@ for roi_index=1:length(roi_list)
     if roi == roi_selected
         color = 'r';
     else
-        color = 'k';
+        color = 'g';
     end
     roi_mask = mask;
     roi_mask(find(roi_mask~=roi))=0;
@@ -616,8 +623,8 @@ for roi_index=1:length(roi_list)
       rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
       col = boundary(rndRow,2); row = boundary(rndRow,1);
       %h = text(col+1, row-1, num2str(L(row,col)));
-      h = text(col+1, row-1, num2str(roi));
-      set(h,'Color',color,'FontSize',14);
+      %h = text(col+1, row-1, num2str(roi));
+      %set(h,'Color',color,'FontSize',14);
     end
 
 end
@@ -715,11 +722,19 @@ function subPixelCorrButton_Callback(hObject, eventdata, handles)
 subRoiCalculationsCorr(handles)
 
 
-% --- Executes on button press in plotImageStacks.
-function plotImageStacks_Callback(hObject, eventdata, handles)
-% hObject    handle to plotImageStacks (see GCBO)
+% --- Executes on button press in plotVideoProjections.
+function plotVideoProjections_Callback(hObject, eventdata, handles)
+% hObject    handle to plotVideoProjections (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+axes(handles.axes1)
+cla(handles.axes1)
+set(handles.axes1,'Ydir','reverse')
+
+imagesc(handles.dataset.dfStackMaxSmoothNorm);
+ylabel('');
+xlabel('Max dF Projection');
 
 axes(handles.axes2)
 cla(handles.axes2)
@@ -727,7 +742,7 @@ set(handles.axes2,'Ydir','reverse')
 
 imagesc(handles.dataset.stdStack);
 ylabel('');
-xlabel('Avg. Normalized STD Stack');
+xlabel('Mean Normalized STD Projection');
 
 axes(handles.axes3)
 cla(handles.axes3)
@@ -735,7 +750,7 @@ set(handles.axes3,'Ydir','reverse')
 
 imagesc(handles.dataset.avgStack);
 ylabel('');
-xlabel('Avg. Stack');
+xlabel('Mean Projection');
 
 
 % --- Executes on button press in useCurrentROIs.
@@ -801,3 +816,26 @@ function medianBaselineFilter_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of medianBaselineFilter
+
+
+
+function thresholdLevel_Callback(hObject, eventdata, handles)
+% hObject    handle to thresholdLevel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of thresholdLevel as text
+%        str2double(get(hObject,'String')) returns contents of thresholdLevel as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function thresholdLevel_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to thresholdLevel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
