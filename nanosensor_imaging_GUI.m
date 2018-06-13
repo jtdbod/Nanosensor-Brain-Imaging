@@ -1,35 +1,35 @@
-function varargout = nanosensor_imaging_GUI_v2(varargin)
-% NANOSENSOR_IMAGING_GUI_V2 MATLAB code for nanosensor_imaging_GUI_v2.fig
-%      NANOSENSOR_IMAGING_GUI_V2, by itself, creates a new NANOSENSOR_IMAGING_GUI_V2 or raises the existing
+function varargout = nanosensor_imaging_GUI(varargin)
+% NANOSENSOR_IMAGING_GUI MATLAB code for nanosensor_imaging_GUI.fig
+%      NANOSENSOR_IMAGING_GUI, by itself, creates a new NANOSENSOR_IMAGING_GUI or raises the existing
 %      singleton*.
 %
-%      H = NANOSENSOR_IMAGING_GUI_V2 returns the handle to a new NANOSENSOR_IMAGING_GUI_V2 or the handle to
+%      H = NANOSENSOR_IMAGING_GUI returns the handle to a new NANOSENSOR_IMAGING_GUI or the handle to
 %      the existing singleton*.
 %
-%      NANOSENSOR_IMAGING_GUI_V2('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in NANOSENSOR_IMAGING_GUI_V2.M with the given input arguments.
+%      NANOSENSOR_IMAGING_GUI('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in NANOSENSOR_IMAGING_GUI.M with the given input arguments.
 %
-%      NANOSENSOR_IMAGING_GUI_V2('Property','Value',...) creates a new NANOSENSOR_IMAGING_GUI_V2 or raises the
+%      NANOSENSOR_IMAGING_GUI('Property','Value',...) creates a new NANOSENSOR_IMAGING_GUI or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before nanosensor_imaging_GUI_v2_OpeningFcn gets called.  An
+%      applied to the GUI before nanosensor_imaging_GUI_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to nanosensor_imaging_GUI_v2_OpeningFcn via varargin.
+%      stop.  All inputs are passed to nanosensor_imaging_GUI_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help nanosensor_imaging_GUI_v2
+% Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 13-Jun-2018 13:49:33
+% Last Modified by GUIDE v2.5 13-Jun-2018 15:10:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @nanosensor_imaging_GUI_v2_OpeningFcn, ...
-                   'gui_OutputFcn',  @nanosensor_imaging_GUI_v2_OutputFcn, ...
+                   'gui_OpeningFcn', @nanosensor_imaging_GUI_OpeningFcn, ...
+                   'gui_OutputFcn',  @nanosensor_imaging_GUI_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,26 +44,26 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before nanosensor_imaging_GUI_v2 is made visible.
-function nanosensor_imaging_GUI_v2_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before nanosensor_imaging_GUI is made visible.
+function nanosensor_imaging_GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to nanosensor_imaging_GUI_v2 (see VARARGIN)
+% varargin   command line arguments to nanosensor_imaging_GUI (see VARARGIN)
 
-% Choose default command line output for nanosensor_imaging_GUI_v2
+% Choose default command line output for nanosensor_imaging_GUI
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes nanosensor_imaging_GUI_v2 wait for user response (see UIRESUME)
+% UIWAIT makes nanosensor_imaging_GUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = nanosensor_imaging_GUI_v2_OutputFcn(hObject, eventdata, handles) 
+function varargout = nanosensor_imaging_GUI_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -828,6 +828,8 @@ function thresholdLevel_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of thresholdLevel as a double
 
 
+
+
 % --- Executes during object creation, after setting all properties.
 function thresholdLevel_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to thresholdLevel (see GCBO)
@@ -838,4 +840,56 @@ function thresholdLevel_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in CalculateROIs.
+function CalculateROIs_Callback(hObject, eventdata, handles)
+% hObject    handle to CalculateROIs (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+strelsize=get(handles.strelSlider,'Value');
+numopens=get(handles.numopens_slider,'Value');
+
+[Lmatrix,mask,stdStack,avgStack,dfStackMaxSmoothNorm]=processImage(handles.dataset.imagestack,strelsize,numopens,handles);
+if max(Lmatrix)==0
+    currFig = gcf;
+    axes(handles.axes1);
+    cla(handles.axes1);
+    imagesc(avgImage);
+    xlabel('NO ROIS FOUND')
+else
+    %Plot the ROI overlay figure
+    currFig = gcf;
+    axes(handles.axes1);
+    cla(handles.axes1);
+
+    cidx = 0;
+
+    roi_list = nonzeros(unique(Lmatrix));
+    mask = Lmatrix;
+
+    imagesc(avgStack); hold on;
+    for roi_index=1:length(roi_list)
+        roi = roi_list(roi_index);
+        roi_mask = mask;
+        roi_mask(find(roi_mask~=roi))=0;
+        [B,L,N,A] = bwboundaries(roi_mask,'noholes');
+        colors=['b' 'g' 'r' 'c' 'm' 'y'];
+        cidx = mod(cidx,length(colors))+1; %Cycle through colors for drawing borders
+        for k=1:length(B),
+          boundary = B{k};
+          %cidx = mod(k,length(colors))+1;
+          plot(boundary(:,2), boundary(:,1),...
+               colors(cidx),'LineWidth',1);
+          %randomize text position for better visibility
+          rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
+          col = boundary(rndRow,2); row = boundary(rndRow,1);
+          %h = text(col+1, row-1, num2str(L(row,col)));
+          h = text(col+1, row-1, num2str(roi));
+          set(h,'Color',colors(cidx),'FontSize',14);
+        end
+
+    end
 end
