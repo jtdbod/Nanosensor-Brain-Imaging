@@ -1,4 +1,9 @@
-function []=plotResults(mask,avgImage,measuredValues,frameRate, handles)
+function []=plotResults(handles)
+
+measuredValues = handles.dataset.measuredValues;
+frameRate = handles.dataset.frameRate;
+imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO TO OVERLAP ROIS.
+
     %Return a blank figure if there are no ROIs detected in file
     if not(isfield(measuredValues,'ROInum'))
         currFig = gcf;
@@ -23,7 +28,7 @@ function []=plotResults(mask,avgImage,measuredValues,frameRate, handles)
             roi_list = nonzeros(unique(handles.dataset.Lmatrix));
             mask = handles.dataset.Lmatrix;
         end
-        imagesc(avgImage); hold on;
+        imagesc(imageFrame1); hold on;
         for roi_index=1:length(roi_list)
             roi = roi_list(roi_index);
             roi_mask = mask;

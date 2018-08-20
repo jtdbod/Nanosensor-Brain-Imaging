@@ -1,5 +1,11 @@
-function [Lmatrix,mask,stdStack,meanStack,dfStackMaxSmoothNorm]=processImage(imagestack,strelsize,numopens,handles)
+function [dfStackMaxSmoothNorm]=processImage(handles)
+
+    %THIS FUNCTION CALCULATES A dF/F STACK FOR FUTURE ROI GENERATION. IT IS
+    %CALLED IMMEDIATELY AFTER AN IMAGESTACK IS LOADED.
+    
     %Test for negative pixel values and correct.
+    
+    imagestack = handles.dataset.imagestack;
     if any(imagestack(:)<0)
         imagestack = imagestack-min(imagestack(:));
     end
@@ -10,12 +16,11 @@ function [Lmatrix,mask,stdStack,meanStack,dfStackMaxSmoothNorm]=processImage(ima
     dfStackMax = max(dFstack,[],3);
     dfStackMaxSmooth = medfilt2(dfStackMax);
     dfStackMaxSmoothNorm = dfStackMaxSmooth./max(dfStackMaxSmooth(:));
-    
-    
 
-    [Lmatrix,mask]=calculateMask(dfStackMaxSmoothNorm,strelsize,handles);
 
-    %MOVED THE FOLLOWING CODE TO 
+    %[Lmatrix,mask]=calculateMask(dfStackMaxSmoothNorm,strelsize,handles);
+
+    %MOVED THE FOLLOWING
     %{
     imagestd = std(imagestack(:,:,1:10),[],3); %Calculate standard deviation image
     imagemean = mean(imagestack(:,:,1:10),3); %Calculate average image

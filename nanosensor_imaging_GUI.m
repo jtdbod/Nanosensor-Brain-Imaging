@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 18-Jun-2018 14:51:05
+% Last Modified by GUIDE v2.5 20-Aug-2018 13:55:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -58,6 +58,8 @@ handles.output = hObject;
 colormap(defineGemColormap);
 % Update handles structure
 guidata(hObject, handles);
+isLoaded=0;
+assignin('base','isLoaded',isLoaded);
 
 % UIWAIT makes nanosensor_imaging_GUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -89,19 +91,20 @@ colormap(defineGemColormap);
 if isequal(FileName,0)
     %Do nothing
 else
-    handles.dataset = load(strcat(PathName,'/',FileName));
-    handles.dataset.filename = strcat(strcat(PathName,'/',FileName));
+    allData = load(strcat(PathName,'/',FileName));
+    handles.dataset = [];
+    %UPDATE DATA TO CURRENT GUI HANDLES
+    for fn = fieldnames(allData.dataset)' %NOTE THAT THIS ONLY WORKS AS A ROW OF CELLS
+        handles.dataset.(fn{1})=allData.dataset.(fn{1});
+    end
     guidata(hObject,handles);%To save dataset to handles
-    frameRate=str2double(get(handles.enterframerate,'String'));
-    %CurrentFileLoaded();
-    %set(handles.CurrentFileLoaded, 'String', FileName);
-
     %Plot file
-    plotResults(handles.dataset.mask,handles.dataset.avgStack,handles.dataset.measuredValues,frameRate,handles);
+    plotResults(handles);
    
     set(handles.CurrentFileLoaded,'String',FileName);
     assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
-
+    isLoaded=1;
+    assignin('base','isLoaded',isLoaded);
     %Update listbox containing list of each ROI for selection
     roiNames = nonzeros(unique(handles.dataset.Lmatrix));
     roiNamesStr = num2str(roiNames);
@@ -136,6 +139,7 @@ end
 file = struct('name',FileName); %Convert to structure for consistency with batch processing code
 handles.dataset.filename = strcat(PathName,'/',FileName);
 handles.dataset.frameRate = str2double(get(handles.enterframerate,'String'));
+guidata(hObject,handles);%To save dataset to handles
 if true(FilterIndex)
     
         if strmatch(fileType,'spe')
@@ -146,6 +150,7 @@ if true(FilterIndex)
             setappdata(barhandle,'canceling',0)
 
             [handles.dataset.imagestack,filename]=loadIMstackSPE(PathName,file,1,barhandle);
+            handles = processImage(handles); % Generate dF/F stack for further processing
             %Display first frame after file loads.
             axes(handles.axes1);
             cla(handles.axes1);
@@ -158,6 +163,9 @@ if true(FilterIndex)
             setappdata(barhandle,'canceling',0)
 
             [handles.dataset.imagestack,filename]=loadIMstackTIF(PathName,file,1,barhandle);
+            dfStackMaxSmoothNorm = processImage(handles); % Generate dF/F stack for further processing
+            handles.dataset.dfStackMaxSmoothNorm = dfStackMaxSmoothNorm;
+            guidata(hObject,handles);%To save dataset to handles
             %Display first frame after file loads.
             axes(handles.axes1);
             cla(handles.axes1);
@@ -167,6 +175,7 @@ if true(FilterIndex)
         else
             error('Error. Filetype must be "tif" or "spe"');
         end
+
 delete(barhandle);
 guidata(hObject,handles);%To save dataset to handles
 assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
@@ -192,28 +201,35 @@ if isfield(handles.dataset,'imagestack')
 
     strelsize=get(handles.strelSlider,'Value');
     numopens=get(handles.numopens_slider,'Value');
-
-    [Lmatrix,mask,stdStack,avgStack,dfStackMaxSmoothNorm]=processImage(handles.dataset.imagestack,strelsize,numopens,handles);
+    
+    %GENERATE ROIS: MASK AND LABEL MATRIX. THIS WILL USE THE OPTIMAL VALUES
+    %THE USER TESTS BY USING THE "CALCULATE ROIS" BUTTON.
+    [handles.dataset.Lmatrix,handles.dataset.mask]=calculateMask(handles);
+    guidata(hObject,handles);%Update GUI handles
+    Lmatrix = handles.dataset.Lmatrix;
+    mask = handles.dataset.mask;
+    
     if true(get(handles.useCurrentROIs,'Value'))
-        [measuredValues]=processROI(imagestack,handles.LmatrixFIXED,barhandle,handles.dataset.frameRate);
+        [handles.dataset.measuredValues]=processROI(imagestack,handles.LmatrixFIXED,barhandle,handles.dataset.frameRate);
         mask = handles.LmatrixFIXED; %Update mask displayed to represent the "saved" ROIs used for this analysis.
         mask(find(mask))=1; %Need to udpate this eventually so ROIs are not calculated for new video and then thrown away.
     else
-        [measuredValues]=processROI(handles.dataset.imagestack,Lmatrix,barhandle,handles.dataset.frameRate);
-    end
-    if isempty(measuredValues)
-        %do nothi
-        delete(barhandle);
-
-    else
-        filename=handles.dataset.filename;
-        frameRate = str2double(get(handles.enterframerate,'String'));
-        save(strcat(filename,'.mat'),'Lmatrix','mask','stdStack','avgStack','dfStackMaxSmoothNorm','measuredValues','filename','frameRate');
-        handles.dataset = load(strcat(filename,'.mat'));
-
+        %CALCULATE SIZE, VALUES ETC. FOR EACH ROI.
+        [handles.dataset.measuredValues]=processROI(handles.dataset.imagestack,Lmatrix,barhandle,handles.dataset.frameRate);
         guidata(hObject,handles);%To save dataset to handles
-        assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
-        plotResults(mask,avgStack,measuredValues,frameRate,handles);
+    end
+    
+    if isempty(handles.dataset.measuredValues)
+        %do nothing if no ROIs are present
+        delete(barhandle);
+    else
+        allData = handles.dataset;
+        save(strcat(handles.dataset.filename(1:end-4),'.mat'),'allData');
+        guidata(hObject,handles);%To save dataset to handles
+        assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace        
+        %PLOT THE RESULTS
+        plotResults(handles);
+        set(handles.CurrentFileLoaded,'String',handles.dataset.filename);
         delete(barhandle);
     end
 else
@@ -610,7 +626,7 @@ else
     roi_list = nonzeros(unique(handles.dataset.Lmatrix));
     mask = handles.dataset.Lmatrix;
 end
-imagesc(handles.dataset.avgStack); hold on;
+imagesc(handles.dataset.imagestack(:,:,1)); hold on;
 for roi_index=1:length(roi_list)
     roi = roi_list(roi_index);
     if roi == roi_selected
@@ -859,12 +875,12 @@ function CalculateROIs_Callback(hObject, eventdata, handles)
 strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
 
-[Lmatrix,mask,stdStack,avgStack,dfStackMaxSmoothNorm]=processImage(handles.dataset.imagestack,strelsize,numopens,handles);
+[Lmatrix,mask]=calculateMask(handles);
 if max(Lmatrix)==0
     currFig = gcf;
-    axes(handles.axes1);
-    cla(handles.axes1);
-    imagesc(avgImage);
+    axes(handles.axes2);
+    cla(handles.axes2);
+    title('Maximum dF Projection')
     xlabel('NO ROIS FOUND')
 else
     %Plot the ROI overlay figure
@@ -878,8 +894,8 @@ else
     roi_list = nonzeros(unique(Lmatrix));
     mask = Lmatrix;
 
-    imagesc(dfStackMaxSmoothNorm); hold on;
-    title('Maximum dF Projection')
+    imagesc(handles.dataset.dfStackMaxSmoothNorm); hold on;
+    title('Maximum F-F_{0} Projection')
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
         roi_mask = mask;
@@ -902,3 +918,77 @@ else
 
     end
 end
+
+
+% --- Executes on button press in filterROIs.
+function filterROIs_Callback(hObject, eventdata, handles)
+% hObject    handle to filterROIs (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+isLoaded=evalin('base','isLoaded');
+if(isLoaded)
+    currentDataset = evalin('base','currentDataset');%grab currentDataset struct from workspace
+    if(get(handles.stimFrameNumber,'String')~="")
+        sf=str2double(get(handles.stimFrameNumber,'String'));%store the stimulus frame provided
+        %call the appropriate function with that stimulus frame
+        %                  disp(sf)
+        %https://www.mathworks.com/matlabcentral/answers/42467-gui-and-work-space-data-sharing
+ 
+        %         disp(currentDataset.measuredValues(1).dF)
+        currentDataset = filterROI(sf,currentDataset);
+        %export the filtered currentDataset to base workspace
+        assignin('base','currentDataset',currentDataset);
+        %update the GUI with the valid ROIs
+        %currentDataset.validMeasuredValues.ROInum contains the updated ROIs
+        %update the listbox with the valid ROIs
+        ROInum = currentDataset.validMeasuredValues.ROInum;
+        %     disp(ROInum)
+        roiNamesStr = num2str(ROInum);
+        set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
+        set(handles.roi_listbox,'string',roiNamesStr);
+        disp('The filter has been applied; the ROI list has been updated.');
+        %function []=plotResults(mask,avgImage,measuredValues,frameRate, handles)
+        %     mask=currentDataset.validMask;
+        %     avgImage=currentDataset.avgStack;
+        %     measuredValues=currentDataset.validMeasuredValues;
+        %     frameRate=str2double(get(handles.enterframerate,'String'));
+        %     handles=get(handles.loadbutton);
+        %     plotResults(mask,avgImage,measuredValues,frameRate, handles);
+    else
+        set(handles.stimFrame,'string','A stimulus frame must be specified.');
+    end
+else
+    set(handles.stimFrame,'string','The data must first be loaded.');
+end
+
+
+function stimFrameNumber_Callback(hObject, eventdata, handles)
+% hObject    handle to stimFrameNumber (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of stimFrameNumber as text
+%        str2double(get(hObject,'String')) returns contents of stimFrameNumber as a double
+sf=str2double(get(hObject,'String'));
+%set(handles.stimFrameNumber,'string','Click Filter after loading data.');
+%sf is the stimulus frame, which will be passed to filter function
+
+% --- Executes during object creation, after setting all properties.
+function stimFrameNumber_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to stimFrameNumber (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function processfilebutton_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to processfilebutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
