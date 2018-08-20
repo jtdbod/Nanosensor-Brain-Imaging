@@ -15,7 +15,8 @@ function [Lmatrix,mask,stdStack,meanStack,dfStackMaxSmoothNorm]=processImage(ima
 
     [Lmatrix,mask]=calculateMask(dfStackMaxSmoothNorm,strelsize,handles);
 
-    
+    %MOVED THE FOLLOWING CODE TO 
+    %{
     imagestd = std(imagestack(:,:,1:10),[],3); %Calculate standard deviation image
     imagemean = mean(imagestack(:,:,1:10),3); %Calculate average image
     
@@ -25,7 +26,7 @@ function [Lmatrix,mask,stdStack,meanStack,dfStackMaxSmoothNorm]=processImage(ima
     
     stdStack = imagestdsmooth;
     meanStack = imagemeansmooth;
-    
+    %}
     
     %ORIGINAL CODE
     %{

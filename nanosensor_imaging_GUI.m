@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 13-Jun-2018 15:10:11
+% Last Modified by GUIDE v2.5 18-Jun-2018 14:51:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -54,7 +54,8 @@ function nanosensor_imaging_GUI_OpeningFcn(hObject, eventdata, handles, varargin
 
 % Choose default command line output for nanosensor_imaging_GUI
 handles.output = hObject;
-
+%Define colormap (Gem adapted from ImageJ, Abraham's favorite)
+colormap(defineGemColormap);
 % Update handles structure
 guidata(hObject, handles);
 
@@ -76,6 +77,8 @@ varargout{1} = handles.output;
 function loadbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to loadbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
+
+%LOAD A MAT FILE CONTAINING PROCESSED VIDEO DATA
 
 %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
 colormap(defineGemColormap);
@@ -119,6 +122,8 @@ function LoadStack_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%LOAD A VIDEO STACK INTO MEMORY (EITHER TIF OR SPE)
+
 clear currentDataset handles.dataset %Hopefully fixes slowdown?
 
 
@@ -156,7 +161,9 @@ if true(FilterIndex)
             %Display first frame after file loads.
             axes(handles.axes1);
             cla(handles.axes1);
+            colormap(defineGemColormap);
             imagesc(handles.dataset.imagestack(:,:,1));
+            title('Frame 1')
         else
             error('Error. Filetype must be "tif" or "spe"');
         end
@@ -862,15 +869,17 @@ if max(Lmatrix)==0
 else
     %Plot the ROI overlay figure
     currFig = gcf;
-    axes(handles.axes1);
-    cla(handles.axes1);
-
+    axes(handles.axes2);
+    cla(handles.axes2);
+    %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
+    colormap(defineGemColormap);
     cidx = 0;
 
     roi_list = nonzeros(unique(Lmatrix));
     mask = Lmatrix;
 
-    imagesc(avgStack); hold on;
+    imagesc(dfStackMaxSmoothNorm); hold on;
+    title('Maximum dF Projection')
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
         roi_mask = mask;
