@@ -91,11 +91,11 @@ colormap(defineGemColormap);
 if isequal(FileName,0)
     %Do nothing
 else
-    allData = load(strcat(PathName,'/',FileName));
+    load(strcat(PathName,'/',FileName),'allData'); %LOAD ANALYZED DATA
     handles.dataset = [];
     %UPDATE DATA TO CURRENT GUI HANDLES
-    for fn = fieldnames(allData.dataset)' %NOTE THAT THIS ONLY WORKS AS A ROW OF CELLS
-        handles.dataset.(fn{1})=allData.dataset.(fn{1});
+    for fn = fieldnames(allData)' %NOTE THAT THIS ONLY WORKS AS A ROW OF CELLS
+        handles.dataset.(fn{1})=allData.(fn{1});
     end
     guidata(hObject,handles);%To save dataset to handles
     %Plot file
@@ -942,24 +942,22 @@ if(isLoaded)
         %update the GUI with the valid ROIs
         %currentDataset.validMeasuredValues.ROInum contains the updated ROIs
         %update the listbox with the valid ROIs
-        ROInum = currentDataset.validMeasuredValues.ROInum;
+        validROInum = currentDataset.validMeasuredValues.ROInum;
         %     disp(ROInum)
-        roiNamesStr = num2str(ROInum);
+        roiNamesStr = num2str(validROInum);
         set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
         set(handles.roi_listbox,'string',roiNamesStr);
+        %PLOT VALID ROI RESULTS
+        handles.dataset.validMeasuredValues = currentDataset.validMeasuredValues;
+        plotResults(handles);
         disp('The filter has been applied; the ROI list has been updated.');
-        %function []=plotResults(mask,avgImage,measuredValues,frameRate, handles)
-        %     mask=currentDataset.validMask;
-        %     avgImage=currentDataset.avgStack;
-        %     measuredValues=currentDataset.validMeasuredValues;
-        %     frameRate=str2double(get(handles.enterframerate,'String'));
-        %     handles=get(handles.loadbutton);
-        %     plotResults(mask,avgImage,measuredValues,frameRate, handles);
+        
+        
     else
-        set(handles.stimFrame,'string','A stimulus frame must be specified.');
+        disp('A stimulus frame must be specified.');
     end
 else
-    set(handles.stimFrame,'string','The data must first be loaded.');
+    disp('The data must first be loaded.');
 end
 
 

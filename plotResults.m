@@ -1,6 +1,11 @@
 function []=plotResults(handles)
 
-measuredValues = handles.dataset.measuredValues;
+%DETERMINE WHETHER "FILTER ROIS" HAS BEEN RUN AND SELECT VALID ROIS
+if isfield(handles.dataset, 'validMeasuredValues')
+    measuredValues = handles.dataset.validMeasuredValues;
+else
+    measuredValues = handles.dataset.measuredValues;
+end
 frameRate = handles.dataset.frameRate;
 imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO TO OVERLAP ROIS.
 
@@ -57,13 +62,21 @@ imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO 
         cla(handles.axes2);
         set(handles.axes2,'Ydir','normal')
         hold on
-        for tracenum=1:size(measuredValues,2)
-            signal = measuredValues(tracenum).dF;
-            traces(tracenum,:)=signal;
+        
+        %DETERMINE WHETHER PLOTTING ORIGINAL OR FILTERED ROIS. THIS HAD TO
+        %BE DONE BECAUSE THE TWO STRUCTURES WERE MADE DIFFERENTLY
+        if isfield(handles.dataset, 'validMeasuredValues')
+            for tracenum=1:size(measuredValues.dF,1)
+                signal = measuredValues.dF(tracenum,:);
+                traces(tracenum,:)=signal;
+            end
+        else
+            for tracenum=1:size(measuredValues,2)
+                signal = measuredValues(tracenum).dF;
+                traces(tracenum,:)=signal;
+            end
         end
-        
-
-        
+       
         x = 1:size(traces,2);
         x=x./frameRate;
         for trace=1:size(traces,1)
@@ -74,7 +87,12 @@ imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO 
                 plottedTrace = traces(trace,:)+max(plottedTrace);
                 plot(x,plottedTrace);
             end
-            text(0,plottedTrace(1),num2str(measuredValues(trace).ROInum));
+            %CORRECT FOR DIFFERENCES BETWEEN VALID ROI STRUCTURES
+            if isfield(handles.dataset, 'validMeasuredValues')
+                text(0,plottedTrace(1),num2str(measuredValues.ROInum(trace)))
+            else
+                text(0,plottedTrace(1),num2str(measuredValues(trace).ROInum));
+            end
             hold on
         end
         xlabel('Time (s)')
