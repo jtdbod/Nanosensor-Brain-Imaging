@@ -3,8 +3,10 @@ function []=plotResults(handles)
 %DETERMINE WHETHER "FILTER ROIS" HAS BEEN RUN AND SELECT VALID ROIS
 if isfield(handles.dataset, 'validMeasuredValues')
     measuredValues = handles.dataset.validMeasuredValues;
+    Lmatrix = handles.dataset.validLmatrix;
 else
     measuredValues = handles.dataset.measuredValues;
+Lmatrix=handles.dataset.Lmatrix;
 end
 frameRate = handles.dataset.frameRate;
 imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO TO OVERLAP ROIS.
@@ -30,8 +32,8 @@ imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO 
             roi_list = nonzeros(unique(handles.LmatrixFIXED));
             mask = handles.LmatrixFIXED;
         else
-            roi_list = nonzeros(unique(handles.dataset.Lmatrix));
-            mask = handles.dataset.Lmatrix;
+            roi_list = nonzeros(unique(Lmatrix));
+            mask = Lmatrix;
         end
         imagesc(imageFrame1); hold on;
         for roi_index=1:length(roi_list)

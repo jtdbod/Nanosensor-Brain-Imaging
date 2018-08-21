@@ -949,6 +949,8 @@ if(isLoaded)
         set(handles.roi_listbox,'string',roiNamesStr);
         %PLOT VALID ROI RESULTS
         handles.dataset.validMeasuredValues = currentDataset.validMeasuredValues;
+        handles.dataset.validLmatrix = currentDataset.validLmatrix;
+        guidata(hObject,handles);%To save LmatrixFIXED to handles
         plotResults(handles);
         disp('The filter has been applied; the ROI list has been updated.');
         
