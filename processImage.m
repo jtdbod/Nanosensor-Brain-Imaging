@@ -13,6 +13,7 @@ function [dfStackMaxSmoothNorm]=processImage(handles)
     baselineFrames = floor(0.05*size(imagestack,3));
     f0 = mean(imagestack(:,:,1:baselineFrames),3);
     dFstack = (imagestack-f0);
+    dFoverf0stack = dFstack./f0;
     dfStackMax = max(dFstack,[],3);
     dfStackMaxSmooth = medfilt2(dfStackMax);
     dfStackMaxSmoothNorm = dfStackMaxSmooth./max(dfStackMaxSmooth(:));
