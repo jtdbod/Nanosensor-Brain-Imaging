@@ -91,7 +91,7 @@ colormap(defineGemColormap);
 if isequal(FileName,0)
     %Do nothing
 else
-    load(strcat(PathName,'/',FileName),'allData'); %LOAD ANALYZED DATA
+    load(strcat(PathName,'/',FileName)); %LOAD ANALYZED DATA
     handles.dataset = [];
     %UPDATE DATA TO CURRENT GUI HANDLES
     for fn = fieldnames(allData)' %NOTE THAT THIS ONLY WORKS AS A ROW OF CELLS
@@ -188,7 +188,6 @@ function processfilebutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 if isfield(handles.dataset,'imagestack')
     %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
     colormap(defineGemColormap);
@@ -223,7 +222,7 @@ if isfield(handles.dataset,'imagestack')
         %do nothing if no ROIs are present
         delete(barhandle);
     else
-        allData = handles.dataset;
+        allData = handles.dataset.measuredValues;
         save(strcat(handles.dataset.filename(1:end-4),'.mat'),'allData');
         guidata(hObject,handles);%To save dataset to handles
         assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace        
@@ -467,6 +466,8 @@ for rois=1:size(data,2)
     allTraces(rois,:)=data(rois).dF;
     roi_labels(rois) = data(rois).ROInum;
 end
+%Simple correlation calculation
+%{ 
 R=corrcoef(allTraces');
 imagesc(R);
 
@@ -474,6 +475,12 @@ R(isnan(R))=0;
 
 eva = evalclusters(R,'kmeans','DaviesBouldin','KList',[1:10]);
 clusterIdx = kmeans(R,eva.OptimalK,'Replicates',5);
+%}
+
+%Calculate hierarchical clustering linkage of ROIs
+Z = linkage(allTraces,'average','euclidean');
+clusterIdx = cluster(Z,5);
+dendrogram(Z,'ColorThreshold',3)
 
 axes(handles.axes2);
 cla(handles.axes2);
@@ -486,12 +493,14 @@ for roiIdx = 1:size(clusterIdx,1)
     mask(find(mask==roi))=clusterIdx(roiIdx); %Replace label with cluster number
     hold all
 end
-imagesc(mask)
+
 set(handles.axes2,'Ydir','reverse')
+colormap('jet')
+imagesc(mask)
 xlim([0 size(mask,2)])
 ylim([0 size(mask,1)])
 xlabel('');
-ylabel('');frame
+ylabel('');
     
 % --------------------------------------------------------------------
 function edit_Callback(hObject, eventdata, handles)
@@ -809,7 +818,7 @@ if isequal(FileName,0)
     %Do nothing
 else
     dataset = load(strcat(PathName,'/',FileName));
-    handles.LmatrixFIXED = dataset.Lmatrix;
+    handles.LmatrixFIXED = handles.dataset.Lmatrix;
     guidata(hObject,handles);%To save LmatrixFIXED to handles
 end
 

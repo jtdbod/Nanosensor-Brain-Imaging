@@ -61,6 +61,7 @@ imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO 
 
         %Plot all dF/F traces
         axes(handles.axes2);
+        title('');
         cla(handles.axes2);
         set(handles.axes2,'Ydir','normal')
         hold on
