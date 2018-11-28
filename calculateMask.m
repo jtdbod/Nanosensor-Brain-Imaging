@@ -18,7 +18,7 @@ dfStackMaxSmoothNorm = handles.dataset.dfStackMaxSmoothNorm;
     %'ForegroundPolarity','bright','neigh',51);
     
 %USER SET THRESHOLD:
-T=userThreshold./100;
+T=userThreshold./100; %In percent
 
 mask1 = imbinarize(dfStackMaxSmoothNorm, T); %Threshold image
 strelsize=get(handles.strelSlider,'Value');

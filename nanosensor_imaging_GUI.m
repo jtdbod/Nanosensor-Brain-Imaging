@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 20-Aug-2018 13:55:13
+% Last Modified by GUIDE v2.5 28-Nov-2018 15:12:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -127,9 +127,6 @@ function LoadStack_Callback(hObject, eventdata, handles)
 
 %LOAD A VIDEO STACK INTO MEMORY (EITHER TIF OR SPE)
 
-clear currentDataset handles.dataset %Hopefully fixes slowdown?
-
-
 if true(get(handles.radiobuttonSPE,'Value'))
     fileType = 'spe';
 elseif true(get(handles.radiobuttonTIF,'Value'))
@@ -161,11 +158,15 @@ if true(FilterIndex)
                     'CreateCancelBtn',...
                     'setappdata(gcbf,''canceling'',1)');
             setappdata(barhandle,'canceling',0)
-
+            
+            %Load stack
             [handles.dataset.imagestack,filename]=loadIMstackTIF(PathName,file,1,barhandle);
-            dfStackMaxSmoothNorm = processImage(handles); % Generate dF/F stack for further processing
+            %Generate maximum dF projection to use for further processing
+            dfStackMaxSmoothNorm = processImage(handles);
+            %Assign max dF projection into the guidata handles
             handles.dataset.dfStackMaxSmoothNorm = dfStackMaxSmoothNorm;
             guidata(hObject,handles);%To save dataset to handles
+            
             %Display first frame after file loads.
             axes(handles.axes1);
             cla(handles.axes1);
@@ -178,7 +179,7 @@ if true(FilterIndex)
 
 delete(barhandle);
 guidata(hObject,handles);%To save dataset to handles
-assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace
+
 end
 
 
@@ -307,7 +308,7 @@ function enterframerate_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-set(hObject,'String','6.92');
+set(hObject,'String','8.33');
 input = str2double(get(hObject,'String'));
 if isnan(input)
   errordlg('You must enter a numeric value','Invalid Input','modal')
@@ -316,13 +317,6 @@ if isnan(input)
 
 end
 
-function edit4_Callback(hObject, eventdata, handles)
-% hObject    handle to edit4 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit4 as text
-%        str2double(get(hObject,'String')) returns contents of edit4 as a double
 
 % --- Executes during object creation, after setting all properties.
 function edit4_CreateFcn(hObject, eventdata, handles)
@@ -808,18 +802,60 @@ function loadMaskButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% LOAD A PRE-EXISTING ROI MASK GENERATED FROM A PREVIOUS VIDEO FILE. THIS
+% CAN BE USED TO OVERLAY THE SAME ROIS ON A SUBSEQUENT VIDEO OF THE SAME
+% FOV.
 
-%Sets a Lmatrix, aka ROI mask, that stays constant until changed and can be
-%used to analyze other videos and overrides the ROI generation for that
-%video.
 [FileName,PathName,FilterIndex] = uigetfile('*.mat');
 
-if isequal(FileName,0)
-    %Do nothing
-else
-    dataset = load(strcat(PathName,'/',FileName));
-    handles.LmatrixFIXED = handles.dataset.Lmatrix;
+if FileName~=0,
+    %LOAD MASK FILE INTO MEMORY AND ASSIGN TO HANDLES
+    loadedData = load(strcat(PathName,'/',FileName),'Lmatrix');
+    Lmatrix = loadedData.Lmatrix;
+    handles.dataset.Lmatrix = Lmatrix;
     guidata(hObject,handles);%To save LmatrixFIXED to handles
+
+    %PLOT ROIS ON CURRENT MAX PROJECTION
+    if max(Lmatrix)==0
+        currFig = gcf;
+        axes(handles.axes2);
+        cla(handles.axes2);
+        title('Maximum dF Projection')
+        xlabel('NO ROIS FOUND')
+    else
+        %PLOT ROI OVERLAY
+        currFig = gcf;
+        axes(handles.axes2);
+        cla(handles.axes2);
+        %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
+        colormap(defineGemColormap);
+        cidx = 0;
+        roi_list = nonzeros(unique(Lmatrix));
+        mask = Lmatrix;
+        %PLOT MAX dF PROJECTION
+        imagesc(handles.dataset.dfStackMaxSmoothNorm); hold on;
+        title('Maximum F-F_{0} Projection')
+        for roi_index=1:length(roi_list)
+            roi = roi_list(roi_index);
+            roi_mask = mask;
+            roi_mask(find(roi_mask~=roi))=0;
+            [B,L,N,A] = bwboundaries(roi_mask,'noholes');
+            colors=['b' 'g' 'r' 'c' 'm' 'y'];
+            cidx = mod(cidx,length(colors))+1; %Cycle through colors for drawing borders
+            for k=1:length(B),
+              boundary = B{k};
+              %cidx = mod(k,length(colors))+1;
+              plot(boundary(:,2), boundary(:,1),...
+                   colors(cidx),'LineWidth',1);
+              %randomize text position for better visibility
+              rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
+              col = boundary(rndRow,2); row = boundary(rndRow,1);
+              %h = text(col+1, row-1, num2str(L(row,col)));
+              h = text(col+1, row-1, num2str(roi));
+              set(h,'Color',colors(cidx),'FontSize',14);
+            end
+        end
+    end
 end
 
 
@@ -884,7 +920,7 @@ function CalculateROIs_Callback(hObject, eventdata, handles)
 strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
 
-[Lmatrix,mask]=calculateMask(handles);
+[Lmatrix,~]=calculateMask(handles);
 if max(Lmatrix)==0
     currFig = gcf;
     axes(handles.axes2);
@@ -926,6 +962,10 @@ else
         end
 
     end
+    %Store the ROI mask (Lmatrix) into the figure handles structure
+    handles.dataset.Lmatrix = Lmatrix;
+    guidata(hObject,handles);%To save dataset to handles
+
 end
 
 
@@ -1001,3 +1041,15 @@ function processfilebutton_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to processfilebutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes on button press in Save_ROI_Mask.
+function Save_ROI_Mask_Callback(hObject, eventdata, handles)
+% hObject    handle to Save_ROI_Mask (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%SAVE THE MASK TO AN M-FILE FOR LATER USE.
+
+Lmatrix = handles.dataset.Lmatrix;
+uisave('Lmatrix');
