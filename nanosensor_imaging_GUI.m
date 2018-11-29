@@ -90,19 +90,20 @@ colormap(defineGemColormap);
 
 if ~isequal(FileName,0)
     
-    load(strcat(PathName,'/',FileName)); %LOAD ANALYZED DATA
+    data = load(strcat(PathName,'/',FileName)); %LOAD ANALYZED DATA
     %CLEAR CURRENT DATASET IN MEMORY
-    handles.DataSet = [];
-    %UPDATE DATA TO CURRENT GUI HANDLES
-    for fn = fieldnames(DataSet)' %NOTE THAT THIS ONLY WORKS AS A ROW OF CELLS
-        handles.DataSet.(fn{1})=DataSet.(fn{1});
+    DataSet = struct('fileName',{data.DataSet.fileName}); %Initialize new DataSet structure
+    %UPDATE DATASET TO CURRENT GUI HANDLES
+    for fn = fieldnames(data.DataSet)' %NOTE THAT THIS ONLY WORKS AS A ROW OF CELLS
+        DataSet.(fn{1})=data.DataSet.(fn{1});
     end
+    handles.DataSet = DataSet;
     guidata(hObject,handles);%To save DataSet to handles
     %Plot file
     plotResults(handles);
    
     set(handles.CurrentFileLoaded,'String',FileName);
-    assignin('base', 'currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
+    assignin('base','currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
     isLoaded=1;
     assignin('base','isLoaded',isLoaded);
     %Update listbox containing list of each ROI for selection
@@ -154,6 +155,7 @@ elseif strmatch(fileType,'tif')
     handles.DataSet(1).fileName = FileName;
     handles.DataSet.pathName = PathName;
     handles.ImageStack = imageStack;
+    handles.DataSet.projectionImages.f0 = mean(imageStack(:,:,1:5),3);
     fileinfo=imfinfo(strcat(PathName,'/',FileName));
     handles.DataSet.numFrames=size(fileinfo,1);
     %Generate maximum dF projection to use for further processing
@@ -195,6 +197,7 @@ if isfield(handles,'ImageStack')
     %CALCULATE SIZE, VALUES ETC. FOR EACH ROI (stored in roiMask) GENERATED
     %BY BUTTON PRESS OR LOADED FROM PREVIOUS FILE
     handles.DataSet.frameRate = str2double(get(handles.enterframerate,'String'));
+    handles.DataSet.thresholdValue = str2double(get(handles.thresholdLevel,'String'));
     [measuredValues]=processROI(handles,barhandle);
 
     handles.DataSet.measuredValues = measuredValues;
@@ -602,7 +605,7 @@ if ~isempty(roi_index)
     roi_list = nonzeros(unique(handles.DataSet.roiMask));
     mask = handles.DataSet.roiMask;
 
-    imagesc(handles.ImageStack(:,:,1)); hold on;
+    imagesc(handles.DataSet.projectionImages.f0); hold on;
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
         if roi == roi_selected
@@ -680,7 +683,6 @@ roi_index=find([handles.DataSet.measuredValues.ROInum]==roi_selected);
 
 handles.DataSet.measuredValues(roi_index)=[];
 handles.DataSet.roiMask(handles.DataSet.roiMask==roi_selected)=0;
-
 guidata(hObject,handles);%Update DataSet to handles
 
 %Save updated DataSet to MAT file (this will be removed once a SAVE button
@@ -689,22 +691,18 @@ DataSet = handles.DataSet;
 file = strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4));
 save(file,'DataSet');
 
-%
-%Plot file
-handles.DataSet = load(strcat(handles.DataSet.fileName,'.mat'));
+%Reload updated DataSet
+loadedData = load(strcat(handles.DataSet.fileName(1:end-4),'.mat'));
+handles.DataSet = loadedData.DataSet;
+
+%Plot updated DataSet
 frameRate=str2double(get(handles.enterframerate,'String'));
-plotResults(handles.DataSet.roiMask,handles.DataSet.avgStack,handles.DataSet.measuredValues,frameRate,handles);
-assignin('base', 'currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
+plotResults(handles);
+%assignin('base', 'currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
 
 %Update listbox containing list of each ROI for selection
-if true(get(handles.useCurrentROIs,'Value'))
-    roiMask = handles.roiMaskFIXED;
-    %For when processing is done with a loaded ROI mask instead of generated
-    %ROIs
-else
-    roiMask = handles.DataSet.roiMask;
-    %For when ROI mask is generated from the file being analyzed.
-end
+roiMask = handles.DataSet.roiMask;
+%For when ROI mask is generated from the file being analyzed.
 roiNames = nonzeros(unique(roiMask));
 roiNamesStr = num2str(roiNames);
 set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
