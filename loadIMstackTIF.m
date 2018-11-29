@@ -1,8 +1,7 @@
-function [imagestack,filename]=loadIMstackTIF(folder,files,i,h) %Load image stacks into variable "imagestack"
+function [imagestack]=loadIMstackTIF(pathname,filename,i,h) %Load image stacks into variable "imagestack"
     
-
-    filename=strcat(folder,'/',files(i).name);
-    fileinfo=imfinfo(filename);
+    file = strcat(pathname,'/',filename);
+    fileinfo=imfinfo(file);
     height=fileinfo(1).Height;
     width=fileinfo(1).Width;
     frames=size(fileinfo,1);
@@ -10,7 +9,7 @@ function [imagestack,filename]=loadIMstackTIF(folder,files,i,h) %Load image stac
     imagestack=zeros(height,width,frames);
 
     for j=1:frames
-        imagestack(:,:,j)=imread(filename,j);   
+        imagestack(:,:,j)=imread(file,j);   
                 % Check for Cancel button press
         if getappdata(h,'canceling')
             delete(h)

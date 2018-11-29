@@ -125,62 +125,65 @@ function LoadStack_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%LOAD A VIDEO STACK INTO MEMORY (EITHER TIF OR SPE)
-
+%LOAD A VIDEO STACK INTO APPDATA MEMORY (EITHER TIF OR SPE)
 if true(get(handles.radiobuttonSPE,'Value'))
     fileType = 'spe';
 elseif true(get(handles.radiobuttonTIF,'Value'))
     fileType = 'tif';
 end
-[FileName,PathName,FilterIndex] = uigetfile(strcat('*.',fileType));
-file = struct('name',FileName); %Convert to structure for consistency with batch processing code
-handles.dataset.filename = strcat(PathName,'/',FileName);
-handles.dataset.frameRate = str2double(get(handles.enterframerate,'String'));
-guidata(hObject,handles);%To save dataset to handles
-if true(FilterIndex)
-    
-        if strmatch(fileType,'spe')
-            %Make progress bar
-            barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File 1 of 1'),...
-                    'CreateCancelBtn',...
-                    'setappdata(gcbf,''canceling'',1)');
-            setappdata(barhandle,'canceling',0)
 
-            [handles.dataset.imagestack,filename]=loadIMstackSPE(PathName,file,1,barhandle);
-            handles = processImage(handles); % Generate dF/F stack for further processing
-            %Display first frame after file loads.
-            axes(handles.axes1);
-            cla(handles.axes1);
-            imagesc(handles.dataset.imagestack(:,:,1));
-        elseif strmatch(fileType,'tif')
-            %Make progress bar
-            barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
-                    'CreateCancelBtn',...
-                    'setappdata(gcbf,''canceling'',1)');
-            setappdata(barhandle,'canceling',0)
-            
-            %Load stack
-            [handles.dataset.imagestack,filename]=loadIMstackTIF(PathName,file,1,barhandle);
-            %Generate maximum dF projection to use for further processing
-            dfStackMaxSmoothNorm = processImage(handles);
-            %Assign max dF projection into the guidata handles
-            handles.dataset.dfStackMaxSmoothNorm = dfStackMaxSmoothNorm;
-            guidata(hObject,handles);%To save dataset to handles
-            
-            %Display first frame after file loads.
-            axes(handles.axes1);
-            cla(handles.axes1);
-            colormap(defineGemColormap);
-            imagesc(handles.dataset.imagestack(:,:,1));
-            title('Frame 1')
-        else
-            error('Error. Filetype must be "tif" or "spe"');
-        end
+[FileName,PathName,~] = uigetfile(strcat('*.',fileType));
+%CREATE APPDATA DATASTRUCTURE
+DataSet = struct('frameRate',{},'fileName',{},'pathName',{'PathName'},'roiMask',{},'measuredValues',{},...
+    'projectionImages',{},'thresholdValue',{},'numFrames',{},'stimFrames',{});
+setappdata(hObject.Parent,'CurrentDataset',DataSet);
+
+if strmatch(fileType,'spe')
+    %Make progress bar
+    barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File 1 of 1'),...
+            'CreateCancelBtn',...
+            'setappdata(gcbf,''canceling'',1)');
+    setappdata(barhandle,'canceling',0)
+
+    [imagestack,filename]=loadIMstackSPE(PathName,file,1,barhandle);
+
+    handles = processImage(handles); % Generate dF/F stack for further processing
+    %Display first frame after file loads.
+    axes(handles.axes1);
+    cla(handles.axes1);
+    imagesc(handles.dataset.imagestack(:,:,1));
+elseif strmatch(fileType,'tif')
+    %Make progress bar
+    barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
+            'CreateCancelBtn',...
+            'setappdata(gcbf,''canceling'',1)');
+    setappdata(barhandle,'canceling',0)
+
+    %Load stack
+    [imageStack]=loadIMstackTIF(PathName,FileName,1,barhandle);
+    %ADD FILENAME AND IMAGESTACK DATA TO APPDATA
+    DataSet(1).fileName = FileName;
+    setappdata(hObject.Parent,'ImageStackData',imageStack);
+    setappdata(hObject.Parent,'CurrentDataset',DataSet);
+    %Generate maximum dF projection to use for further processing
+    dfStackMaxSmoothNorm = processImage(imageStack,handles);
+    %Assign max dF projection into the guidata handles
+    handles.dataset.dfStackMaxSmoothNorm = dfStackMaxSmoothNorm;
+    guidata(hObject,handles);%To save dataset to handles
+
+    %Display first frame after file loads.
+    axes(handles.axes1);
+    cla(handles.axes1);
+    colormap(defineGemColormap);
+    imagesc(imageStack(:,:,1));
+    title('Frame 1')
+else
+    error('Error. Filetype must be "tif" or "spe"');
+end
 
 delete(barhandle);
 guidata(hObject,handles);%To save dataset to handles
 
-end
 
 
 % --- Executes on button press in processfilebutton.
@@ -198,34 +201,23 @@ if isfield(handles.dataset,'imagestack')
             'setappdata(gcbf,''canceling'',1)');
     setappdata(barhandle,'canceling',0)
 
-
     strelsize=get(handles.strelSlider,'Value');
     numopens=get(handles.numopens_slider,'Value');
     
     %GENERATE ROIS: MASK AND LABEL MATRIX. THIS WILL USE THE OPTIMAL VALUES
     %THE USER TESTS BY USING THE "CALCULATE ROIS" BUTTON.
-    [handles.dataset.Lmatrix,handles.dataset.mask]=calculateMask(handles);
-    guidata(hObject,handles);%Update GUI handles
-    Lmatrix = handles.dataset.Lmatrix;
-    mask = handles.dataset.mask;
+
+    %CALCULATE SIZE, VALUES ETC. FOR EACH ROI (stored in Lmatrix) GENERATED
+    %BY BUTTON PRESS OR LOADING FROM PREVIOUS FILE
+    [videoDataset]=processROI(handles);
+    %ASSIGN FILENAME AND FRAME RATE INFORMATION TO videoDataset structure
+
+    handles.dataset.videoDataset = videoDataset;
     
-    if true(get(handles.useCurrentROIs,'Value'))
-        [handles.dataset.measuredValues]=processROI(imagestack,handles.LmatrixFIXED,barhandle,handles.dataset.frameRate);
-        mask = handles.LmatrixFIXED; %Update mask displayed to represent the "saved" ROIs used for this analysis.
-        mask(find(mask))=1; %Need to udpate this eventually so ROIs are not calculated for new video and then thrown away.
-    else
-        %CALCULATE SIZE, VALUES ETC. FOR EACH ROI.
-        [handles.dataset.measuredValues]=processROI(handles.dataset.imagestack,Lmatrix,barhandle,handles.dataset.frameRate);
-        guidata(hObject,handles);%To save dataset to handles
-    end
-    
-    if isempty(handles.dataset.measuredValues)
-        %do nothing if no ROIs are present
-        delete(barhandle);
-    else
-        allData = handles.dataset.measuredValues;
-        save(strcat(handles.dataset.filename(1:end-4),'.mat'),'allData');
-        guidata(hObject,handles);%To save dataset to handles
+    guidata(hObject,handles);%To save dataset to handles
+
+    if ~isempty(videoDataset)
+        save(strcat(handles.dataset.filename(1:end-4),'.mat'),'videoDataset');
         assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace        
         %PLOT THE RESULTS
         plotResults(handles);

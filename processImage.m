@@ -1,11 +1,9 @@
-function [dfStackMaxSmoothNorm]=processImage(handles)
+function [dfStackMaxSmoothNorm]=processImage(imagestack,handles)
 
     %THIS FUNCTION CALCULATES A dF/F STACK FOR FUTURE ROI GENERATION. IT IS
     %CALLED IMMEDIATELY AFTER AN IMAGESTACK IS LOADED.
     
     %Test for negative pixel values and correct.
-    
-    imagestack = handles.dataset.imagestack;
     if any(imagestack(:)<0)
         imagestack = imagestack-min(imagestack(:));
     end
