@@ -88,25 +88,25 @@ colormap(defineGemColormap);
 %Load file
 [FileName,PathName,FilterIndex] = uigetfile('*.mat');
 
-if isequal(FileName,0)
-    %Do nothing
-else
+if ~isequal(FileName,0)
+    
     load(strcat(PathName,'/',FileName)); %LOAD ANALYZED DATA
-    handles.dataset = [];
+    %CLEAR CURRENT DATASET IN MEMORY
+    handles.DataSet = [];
     %UPDATE DATA TO CURRENT GUI HANDLES
-    for fn = fieldnames(allData)' %NOTE THAT THIS ONLY WORKS AS A ROW OF CELLS
-        handles.dataset.(fn{1})=allData.(fn{1});
+    for fn = fieldnames(DataSet)' %NOTE THAT THIS ONLY WORKS AS A ROW OF CELLS
+        handles.DataSet.(fn{1})=DataSet.(fn{1});
     end
-    guidata(hObject,handles);%To save dataset to handles
+    guidata(hObject,handles);%To save DataSet to handles
     %Plot file
     plotResults(handles);
    
     set(handles.CurrentFileLoaded,'String',FileName);
-    assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
+    assignin('base', 'currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
     isLoaded=1;
     assignin('base','isLoaded',isLoaded);
     %Update listbox containing list of each ROI for selection
-    roiNames = nonzeros(unique(handles.dataset.Lmatrix));
+    roiNames = nonzeros(unique(handles.DataSet.roiMask));
     roiNamesStr = num2str(roiNames);
     set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
     set(handles.roi_listbox,'string',roiNamesStr);
@@ -125,6 +125,11 @@ function LoadStack_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%CREATE DATASTRUCTURE FOR USER DATA AND STORE IN GUI HANDLES
+handles.DataSet = struct('frameRate',{},'fileName',{},'pathName',{'PathName'},'roiMask',{},'measuredValues',{},...
+    'projectionImages',{},'thresholdValue',{},'numFrames',{},'stimFrames',{});
+handles.ImageStack = [];
+
 %LOAD A VIDEO STACK INTO APPDATA MEMORY (EITHER TIF OR SPE)
 if true(get(handles.radiobuttonSPE,'Value'))
     fileType = 'spe';
@@ -133,25 +138,9 @@ elseif true(get(handles.radiobuttonTIF,'Value'))
 end
 
 [FileName,PathName,~] = uigetfile(strcat('*.',fileType));
-%CREATE APPDATA DATASTRUCTURE
-DataSet = struct('frameRate',{},'fileName',{},'pathName',{'PathName'},'roiMask',{},'measuredValues',{},...
-    'projectionImages',{},'thresholdValue',{},'numFrames',{},'stimFrames',{});
-setappdata(hObject.Parent,'CurrentDataset',DataSet);
 
 if strmatch(fileType,'spe')
-    %Make progress bar
-    barhandle = waitbar(0,'Loading Frame: x of x','Name',sprintf('Processing File 1 of 1'),...
-            'CreateCancelBtn',...
-            'setappdata(gcbf,''canceling'',1)');
-    setappdata(barhandle,'canceling',0)
-
-    [imagestack,filename]=loadIMstackSPE(PathName,file,1,barhandle);
-
-    handles = processImage(handles); % Generate dF/F stack for further processing
-    %Display first frame after file loads.
-    axes(handles.axes1);
-    cla(handles.axes1);
-    imagesc(handles.dataset.imagestack(:,:,1));
+    error('SPE is not supported in this version. Bug Travis and he will fix it in a few minutes');
 elseif strmatch(fileType,'tif')
     %Make progress bar
     barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
@@ -162,14 +151,16 @@ elseif strmatch(fileType,'tif')
     %Load stack
     [imageStack]=loadIMstackTIF(PathName,FileName,1,barhandle);
     %ADD FILENAME AND IMAGESTACK DATA TO APPDATA
-    DataSet(1).fileName = FileName;
-    setappdata(hObject.Parent,'ImageStackData',imageStack);
-    setappdata(hObject.Parent,'CurrentDataset',DataSet);
+    handles.DataSet(1).fileName = FileName;
+    handles.DataSet.pathName = PathName;
+    handles.ImageStack = imageStack;
+    fileinfo=imfinfo(strcat(PathName,'/',FileName));
+    handles.DataSet.numFrames=size(fileinfo,1);
     %Generate maximum dF projection to use for further processing
     dfStackMaxSmoothNorm = processImage(imageStack,handles);
     %Assign max dF projection into the guidata handles
-    handles.dataset.dfStackMaxSmoothNorm = dfStackMaxSmoothNorm;
-    guidata(hObject,handles);%To save dataset to handles
+    handles.DataSet.projectionImages.maxdFoverFProj = dfStackMaxSmoothNorm;
+    guidata(hObject,handles);%To save DataSet to handles
 
     %Display first frame after file loads.
     axes(handles.axes1);
@@ -182,7 +173,7 @@ else
 end
 
 delete(barhandle);
-guidata(hObject,handles);%To save dataset to handles
+guidata(hObject,handles);%To save DataSet to handles
 
 
 
@@ -192,7 +183,7 @@ function processfilebutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if isfield(handles.dataset,'imagestack')
+if isfield(handles,'ImageStack')
     %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
     colormap(defineGemColormap);
     %Make progress bar
@@ -201,27 +192,22 @@ if isfield(handles.dataset,'imagestack')
             'setappdata(gcbf,''canceling'',1)');
     setappdata(barhandle,'canceling',0)
 
-    strelsize=get(handles.strelSlider,'Value');
-    numopens=get(handles.numopens_slider,'Value');
+    %CALCULATE SIZE, VALUES ETC. FOR EACH ROI (stored in roiMask) GENERATED
+    %BY BUTTON PRESS OR LOADED FROM PREVIOUS FILE
+    handles.DataSet.frameRate = str2double(get(handles.enterframerate,'String'));
+    [measuredValues]=processROI(handles,barhandle);
+
+    handles.DataSet.measuredValues = measuredValues;
     
-    %GENERATE ROIS: MASK AND LABEL MATRIX. THIS WILL USE THE OPTIMAL VALUES
-    %THE USER TESTS BY USING THE "CALCULATE ROIS" BUTTON.
+    guidata(hObject,handles);%To save DataSet to handles
 
-    %CALCULATE SIZE, VALUES ETC. FOR EACH ROI (stored in Lmatrix) GENERATED
-    %BY BUTTON PRESS OR LOADING FROM PREVIOUS FILE
-    [videoDataset]=processROI(handles);
-    %ASSIGN FILENAME AND FRAME RATE INFORMATION TO videoDataset structure
-
-    handles.dataset.videoDataset = videoDataset;
-    
-    guidata(hObject,handles);%To save dataset to handles
-
-    if ~isempty(videoDataset)
-        save(strcat(handles.dataset.filename(1:end-4),'.mat'),'videoDataset');
-        assignin('base', 'currentDataset', handles.dataset) %Adds all data for the loaded file to the current MATLAB workspace        
+    if ~isempty(measuredValues)
+        DataSet = handles.DataSet;
+        save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');
+        %assignin('base', 'currentDataset', handles.DataSet) %Adds all data for the loaded file to the current MATLAB workspace        
         %PLOT THE RESULTS
         plotResults(handles);
-        set(handles.CurrentFileLoaded,'String',handles.dataset.filename);
+        set(handles.CurrentFileLoaded,'String',handles.DataSet.fileName);
         delete(barhandle);
     end
 else
@@ -231,7 +217,7 @@ end
 
 
 %Generate listbox containing list of each ROI for selection
-roiNames = nonzeros(unique(handles.dataset.Lmatrix));
+roiNames = nonzeros(unique(handles.DataSet.roiMask));
 roiNamesStr = num2str(roiNames);
 set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
 set(handles.roi_listbox,'string',roiNamesStr);
@@ -251,7 +237,7 @@ end
 strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
 handles = batchProcessVideos(fileType,frameRate,strelsize,numopens,handles);
-guidata(hObject,handles);%To save dataset to handles
+guidata(hObject,handles);%To save DataSet to handles
 
 
 function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
@@ -264,9 +250,9 @@ function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
 
 %Look to see if metadata exists
 
-%exist(strcat(handles.dataset.filename,'.txt');
+%exist(strcat(handles.DataSet.filename,'.txt');
 
-handles.dataset.frameRate = str2double(get(hObject,'String'));
+handles.DataSet.frameRate = str2double(get(hObject,'String'));
 
 
 %Future code for mining metadata
@@ -403,7 +389,7 @@ function CloseAll_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-delete(findall(0,'Type','Figure')) %Closes all open windows, including pesky waitbars
+delete(findall(0,'Type','Figure','Tag','TMWWaitbar')) %Closes hanging waitbars.
 
 
 % --- Executes on button press in plotHistogram.
@@ -411,8 +397,8 @@ function plotHistogram_Callback(hObject, eventdata, handles)
 % hObject    handle to plotHistogram (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-for i=1:size(handles.dataset.measuredValues,2);
-    ROIsize(i) = handles.dataset.measuredValues(i).Area(1);
+for i=1:size(handles.DataSet.measuredValues,2);
+    ROIsize(i) = handles.DataSet.measuredValues(i).Area(1);
 end
 axes(handles.axes2)
 cla(handles.axes2)
@@ -426,7 +412,7 @@ function plotAlldF_Callback(hObject, eventdata, handles)
 % hObject    handle to plotAlldF (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-measuredValues=handles.dataset.measuredValues;
+measuredValues=handles.DataSet.measuredValues;
 axes(handles.axes2);
 hold off
 for i=1:size(measuredValues,2)
@@ -447,7 +433,7 @@ function CorrelationMatrix_Callback(~, eventdata, handles)
 axes(handles.axes3);
 
 hold off
-data=handles.dataset.measuredValues;
+data=handles.DataSet.measuredValues;
 for rois=1:size(data,2)
     allTraces(rois,:)=data(rois).dF;
     roi_labels(rois) = data(rois).ROInum;
@@ -472,7 +458,7 @@ axes(handles.axes2);
 cla(handles.axes2);
 
 %Plot ROIs color coded by cluster ID
-mask = handles.dataset.Lmatrix;
+mask = handles.DataSet.roiMask;
 
 for roiIdx = 1:size(clusterIdx,1)
     roi = roi_labels(roiIdx);
@@ -515,7 +501,7 @@ function calc_spike_slope_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-measuredValues=handles.dataset.measuredValues;
+measuredValues=handles.DataSet.measuredValues;
 frameRate=str2double(get(handles.enterframerate,'String'));
 spikeSlopes=[]; %Store slopes in this array
 %fileNumbers = []; %Stores file number for each slope measurements
@@ -590,61 +576,65 @@ roi_names = get(handles.roi_listbox,'string'); %Name of ROI selected (using roi_
 roi_selected=str2num(roi_names(roi_selected_value,:));
 
 %Find ROI name that matches selected value
-roi_index=find([handles.dataset.measuredValues.ROInum]==roi_selected);
-axes(handles.axes2)
-cla(handles.axes2)
-set(handles.axes2,'Ydir','normal')
-frameRate=str2double(get(handles.enterframerate,'String'));
-x=1:length(handles.dataset.measuredValues(roi_index).dF);
-x=x./frameRate;
-if get(handles.medianBaselineFilter,'Value') %Subtract median filter for baseline correction (optional)
-    traceFilt = medfilt1(handles.dataset.measuredValues(roi_index).dF,50);
-    y=smooth(handles.dataset.measuredValues(roi_index).dF,5)-traceFilt';
-else
-    y=handles.dataset.measuredValues(roi_index).dF;
-end
-plot(x,y)
-axis tight
-
-%Highlight the selected ROI.
-
-%Plot the ROI overlay figure
-currFig = gcf;
-axes(handles.axes1);
-cla(handles.axes1);
-%Decide whether to use mask generated from file or Lmatrix mask from
-%previously loaded video.
-if true(get(handles.useCurrentROIs,'Value'))
-    roi_list = nonzeros(unique(handles.LmatrixFIXED));
-    mask = handles.LmatrixFIXED;
-else
-    roi_list = nonzeros(unique(handles.dataset.Lmatrix));
-    mask = handles.dataset.Lmatrix;
-end
-imagesc(handles.dataset.imagestack(:,:,1)); hold on;
-for roi_index=1:length(roi_list)
-    roi = roi_list(roi_index);
-    if roi == roi_selected
-        color = 'r';
+roi_index=find([handles.DataSet.measuredValues.ROInum]==roi_selected);
+if ~isempty(roi_index)
+    axes(handles.axes2)
+    cla(handles.axes2)
+    set(handles.axes2,'Ydir','normal')
+    frameRate=str2double(get(handles.enterframerate,'String'));
+    x=1:length(handles.DataSet.measuredValues(roi_index).dF);
+    x=x./frameRate;
+    if get(handles.medianBaselineFilter,'Value') %Subtract median filter for baseline correction (optional)
+        traceFilt = medfilt1(handles.DataSet.measuredValues(roi_index).dF,50);
+        y=smooth(handles.DataSet.measuredValues(roi_index).dF,5)-traceFilt';
     else
-        color = 'g';
+        y=handles.DataSet.measuredValues(roi_index).dF;
     end
-    roi_mask = mask;
-    roi_mask(find(roi_mask~=roi))=0;
-    [B,L,N,A] = bwboundaries(roi_mask,'noholes');
-    for k=1:length(B),
-      boundary = B{k};
-      %cidx = mod(k,length(colors))+1;
-      plot(boundary(:,2), boundary(:,1),...
-           color,'LineWidth',1);
-      %randomize text position for better visibility
-      rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
-      col = boundary(rndRow,2); row = boundary(rndRow,1);
-      %h = text(col+1, row-1, num2str(L(row,col)));
-      %h = text(col+1, row-1, num2str(roi));
-      %set(h,'Color',color,'FontSize',14);
-    end
+    plot(x,y)
+    axis tight
 
+    %Highlight the selected ROI.
+
+    %Plot the ROI overlay figure
+    currFig = gcf;
+    axes(handles.axes1);
+    cla(handles.axes1);
+    roi_list = nonzeros(unique(handles.DataSet.roiMask));
+    mask = handles.DataSet.roiMask;
+
+    imagesc(handles.ImageStack(:,:,1)); hold on;
+    for roi_index=1:length(roi_list)
+        roi = roi_list(roi_index);
+        if roi == roi_selected
+            color = 'r';
+        else
+            color = 'g';
+        end
+        roi_mask = mask;
+        roi_mask(find(roi_mask~=roi))=0;
+        [B,L,N,A] = bwboundaries(roi_mask,'noholes');
+        for k=1:length(B),
+          boundary = B{k};
+          %cidx = mod(k,length(colors))+1;
+          plot(boundary(:,2), boundary(:,1),...
+               color,'LineWidth',1);
+          %randomize text position for better visibility
+          rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
+          col = boundary(rndRow,2); row = boundary(rndRow,1);
+          %h = text(col+1, row-1, num2str(L(row,col)));
+          %h = text(col+1, row-1, num2str(roi));
+          %set(h,'Color',color,'FontSize',14);
+        end
+    end
+else 
+    axes(handles.axes2)
+    cla(handles.axes2)
+    set(handles.axes2,'Ydir','normal')
+    xlimits = get(handles.axes2,'XLim');
+    ylimits = get(handles.axes2,'YLim');
+    xpos = (xlimits(2)-xlimits(1))/2;
+    ypos = (ylimits(2)-ylimits(1))/2;
+    text(xpos,ypos,'ROI Previously Deleted. Reload DataSet','HorizontalAlignment','Center');
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -682,50 +672,40 @@ roi_selected=str2num(roi_names(roi_selected_value,:));
 %Delete measuredValues for selected ROI
 
 %Find ROI name that matches selected value
-roi_index=find([handles.dataset.measuredValues.ROInum]==roi_selected);
+roi_index=find([handles.DataSet.measuredValues.ROInum]==roi_selected);
 
 %NOTE: careful use of 'roi_index' for deleting correct field of the
 %measuredValues structure while 'roi_selected' is used for deleting ROIs in
-%the 'Lmatrix' and 'mask' variables.
+%the 'roiMask' and 'mask' variables.
 
-handles.dataset.measuredValues(roi_index)=[];
-handles.dataset.Lmatrix(handles.dataset.Lmatrix==roi_selected)=0;
-if true(get(handles.useCurrentROIs,'Value'))
-    handles.LmatrixFIXED(handles.LmatrixFIXED==roi_selected)=0;
-    %For when processing is done with a loaded ROI mask instead of generated
-    %ROIs
-else
-    handles.dataset.mask(handles.dataset.Lmatrix==roi_selected)=0;
-    %For when ROI mask is generated from the file being analyzed.
-end
-guidata(hObject,handles);%Update dataset to handles
-%Resave updated dataset
-Lmatrix=handles.dataset.Lmatrix;
-mask=handles.dataset.mask;
-stdStack=handles.dataset.stdStack;
-measuredValues=handles.dataset.measuredValues;
-filename = handles.dataset.filename;
-avgStack = handles.dataset.avgStack;
+handles.DataSet.measuredValues(roi_index)=[];
+handles.DataSet.roiMask(handles.DataSet.roiMask==roi_selected)=0;
 
-save(strcat(handles.dataset.filename,'.mat'),'Lmatrix','mask','stdStack','avgStack','measuredValues','filename');
+guidata(hObject,handles);%Update DataSet to handles
+
+%Save updated DataSet to MAT file (this will be removed once a SAVE button
+%is added
+DataSet = handles.DataSet;
+file = strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4));
+save(file,'DataSet');
 
 %
 %Plot file
-handles.dataset = load(strcat(handles.dataset.filename,'.mat'));
+handles.DataSet = load(strcat(handles.DataSet.fileName,'.mat'));
 frameRate=str2double(get(handles.enterframerate,'String'));
-plotResults(handles.dataset.mask,handles.dataset.avgStack,handles.dataset.measuredValues,frameRate,handles);
-assignin('base', 'currentDataset', handles.dataset) %Adds measuredValues for the loaded file to the current MATLAB workspace
+plotResults(handles.DataSet.roiMask,handles.DataSet.avgStack,handles.DataSet.measuredValues,frameRate,handles);
+assignin('base', 'currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
 
 %Update listbox containing list of each ROI for selection
 if true(get(handles.useCurrentROIs,'Value'))
-    Lmatrix = handles.LmatrixFIXED;
+    roiMask = handles.roiMaskFIXED;
     %For when processing is done with a loaded ROI mask instead of generated
     %ROIs
 else
-    Lmatrix = handles.dataset.Lmatrix;
+    roiMask = handles.DataSet.roiMask;
     %For when ROI mask is generated from the file being analyzed.
 end
-roiNames = nonzeros(unique(Lmatrix));
+roiNames = nonzeros(unique(roiMask));
 roiNamesStr = num2str(roiNames);
 set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
 set(handles.roi_listbox,'string',roiNamesStr);
@@ -750,7 +730,7 @@ axes(handles.axes1)
 cla(handles.axes1)
 set(handles.axes1,'Ydir','reverse')
 
-imagesc(handles.dataset.dfStackMaxSmoothNorm);
+imagesc(handles.DataSet.dfStackMaxSmoothNorm);
 ylabel('');
 xlabel('Max dF Projection');
 
@@ -758,7 +738,7 @@ axes(handles.axes2)
 cla(handles.axes2)
 set(handles.axes2,'Ydir','reverse')
 
-imagesc(handles.dataset.stdStack);
+imagesc(handles.DataSet.stdStack);
 ylabel('');
 xlabel('Mean Normalized STD Projection');
 
@@ -766,26 +746,9 @@ axes(handles.axes3)
 cla(handles.axes3)
 set(handles.axes3,'Ydir','reverse')
 
-imagesc(handles.dataset.avgStack);
+imagesc(handles.DataSet.avgStack);
 ylabel('');
 xlabel('Mean Projection');
-
-
-% --- Executes on button press in useCurrentROIs.
-function useCurrentROIs_Callback(hObject, eventdata, handles)
-% hObject    handle to useCurrentROIs (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of useCurrentROIs
-
-isSelected = get(handles.useCurrentROIs,'Value');
-
-if isempty(get(handles.CurrentFileLoaded,'String'));
-    disp('No ROI mask loaded')
-else
-
-end
 
 
 % --- Executes on button press in loadMaskButton.
@@ -802,13 +765,13 @@ function loadMaskButton_Callback(hObject, eventdata, handles)
 
 if FileName~=0,
     %LOAD MASK FILE INTO MEMORY AND ASSIGN TO HANDLES
-    loadedData = load(strcat(PathName,'/',FileName),'Lmatrix');
-    Lmatrix = loadedData.Lmatrix;
-    handles.dataset.Lmatrix = Lmatrix;
-    guidata(hObject,handles);%To save LmatrixFIXED to handles
+    loadedData = load(strcat(PathName,'/',FileName),'roiMask');
+    roiMask = loadedData.roiMask;
+    handles.DataSet.roiMask = roiMask;
+    guidata(hObject,handles);%To save roiMaskFIXED to handles
 
     %PLOT ROIS ON CURRENT MAX PROJECTION
-    if max(Lmatrix)==0
+    if max(roiMask)==0
         currFig = gcf;
         axes(handles.axes2);
         cla(handles.axes2);
@@ -822,10 +785,10 @@ if FileName~=0,
         %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
         colormap(defineGemColormap);
         cidx = 0;
-        roi_list = nonzeros(unique(Lmatrix));
-        mask = Lmatrix;
+        roi_list = nonzeros(unique(roiMask));
+        mask = roiMask;
         %PLOT MAX dF PROJECTION
-        imagesc(handles.dataset.dfStackMaxSmoothNorm); hold on;
+        imagesc(handles.DataSet.projectionImages.maxdFoverFProj); hold on;
         title('Maximum F-F_{0} Projection')
         for roi_index=1:length(roi_list)
             roi = roi_list(roi_index);
@@ -912,8 +875,8 @@ function CalculateROIs_Callback(hObject, eventdata, handles)
 strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
 
-[Lmatrix,~]=calculateMask(handles);
-if max(Lmatrix)==0
+[roiMask,~]=calculateMask(handles);
+if max(roiMask)==0
     currFig = gcf;
     axes(handles.axes2);
     cla(handles.axes2);
@@ -928,10 +891,10 @@ else
     colormap(defineGemColormap);
     cidx = 0;
 
-    roi_list = nonzeros(unique(Lmatrix));
-    mask = Lmatrix;
-
-    imagesc(handles.dataset.dfStackMaxSmoothNorm); hold on;
+    roi_list = nonzeros(unique(roiMask));
+    mask = roiMask;
+    maxdFProjImage = handles.DataSet.projectionImages.maxdFoverFProj;
+    imagesc(maxdFProjImage); hold on;
     title('Maximum F-F_{0} Projection')
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
@@ -954,10 +917,9 @@ else
         end
 
     end
-    %Store the ROI mask (Lmatrix) into the figure handles structure
-    handles.dataset.Lmatrix = Lmatrix;
-    guidata(hObject,handles);%To save dataset to handles
-
+    %Store the ROI mask (roiMask) into the figure handles structure
+    handles.DataSet.roiMask = roiMask;
+    guidata(hObject,handles);%To save DataSet to handles
 end
 
 
@@ -989,9 +951,9 @@ if(isLoaded)
         set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
         set(handles.roi_listbox,'string',roiNamesStr);
         %PLOT VALID ROI RESULTS
-        handles.dataset.validMeasuredValues = currentDataset.validMeasuredValues;
-        handles.dataset.validLmatrix = currentDataset.validLmatrix;
-        guidata(hObject,handles);%To save LmatrixFIXED to handles
+        handles.DataSet.validMeasuredValues = currentDataset.validMeasuredValues;
+        handles.DataSet.validroiMask = currentDataset.validroiMask;
+        guidata(hObject,handles);%To save roiMaskFIXED to handles
         plotResults(handles);
         disp('The filter has been applied; the ROI list has been updated.');
         
@@ -1043,5 +1005,5 @@ function Save_ROI_Mask_Callback(hObject, eventdata, handles)
 
 %SAVE THE MASK TO AN M-FILE FOR LATER USE.
 
-Lmatrix = handles.dataset.Lmatrix;
-uisave('Lmatrix');
+roiMask = handles.DataSet.roiMask;
+uisave('roiMask');

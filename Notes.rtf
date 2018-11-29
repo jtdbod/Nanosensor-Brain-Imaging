@@ -7,22 +7,22 @@
 
 \f0\fs24 \cf0 videoData (array): contains the nxmxt array of each frame from the video\
 \
-VideoDataset (structure): Contains all analyzed data from the video\
+DataSet (structure): Contains all analyzed data from the video\
 \
-VideoDataset fields:\
+DataSet fields:\
 \
-VideoDataset.frameRate = the framerate of the video\
-VideoDataset.fileName = the filename of the video\
-VideoDataset.pathName = the pathname of the video\
-VideoDataset.roiMask = the numebred ROI mask of the video (formerly Lmatrix)\
-VideoDataset.measuredValues = Properties measured for each ROI over time, e.g. intensity, size etc.\
-VideoDataset.projectionImages = Contains different stack projections of the video\
-VideoDataset.projectionImages.f0 = An average projection of the first X number of frames of the video (formerly f0)\
-VideoDataset.projectionImages.meanProj = A mean projection of the video.\
-VideoDataset.projectionImages.stdProj = A standard deviation projection image of the video.\
-VideoDataset.projectionImages.maxdFoverFProj = A maximum projection of (Fi-F0)/F0 normalized percent change in fluorescence image stack.\
-VideoDataset.thresholdValue = The user defined (or auto generated) threshold used for thresholding and generating ROIs\
-VideoDataset.numFrames = Number of frames in the video\
-VideoDataset.stimFrames = An array containing indexes for all the frame numbers where a stimulation (e.g. electrical, optical) occurred.\
+DataSet.frameRate = the framerate of the video\
+DataSet.fileName = the filename of the video\
+DataSet.pathName = the pathname of the video\
+DataSet.roiMask = the numebred ROI mask of the video (formerly Lmatrix)\
+DataSet.measuredValues = Properties measured for each ROI over time, e.g. intensity, size etc.\
+DataSet.projectionImages = Contains different stack projections of the video\
+DataSet.projectionImages.f0 = An average projection of the first X number of frames of the video (formerly f0)\
+DataSet.projectionImages.meanProj = A mean projection of the video.\
+DataSet.projectionImages.stdProj = A standard deviation projection image of the video.\
+DataSet.projectionImages.maxdFoverFProj = A maximum projection of (Fi-F0)/F0 normalized percent change in fluorescence image stack.\
+DataSet.thresholdValue = The user defined (or auto generated) threshold used for thresholding and generating ROIs\
+DataSet.numFrames = Number of frames in the video\
+DataSet.stimFrames = An array containing indexes for all the frame numbers where a stimulation (e.g. electrical, optical) occurred.\
 \
 }

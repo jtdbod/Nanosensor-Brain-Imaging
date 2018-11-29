@@ -1,4 +1,4 @@
-function [imagestack]=loadIMstackTIF(pathname,filename,i,h) %Load image stacks into variable "imagestack"
+function [imagestack]=loadIMstackTIF(pathname,filename,i,h)
     
     file = strcat(pathname,'/',filename);
     fileinfo=imfinfo(file);

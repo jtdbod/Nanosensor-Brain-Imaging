@@ -1,19 +1,23 @@
-function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)   
+function [measuredValues]=processROI(handles,barhandle)   
+    
+    imagestack = handles.ImageStack;
+    roiMask = handles.DataSet.roiMask;
+
     frames=size(imagestack,3);
-    %measuredValues = zeros(max(Lmatrix(:)),frames);
+    %measuredValues = zeros(max(roiMask(:)),frames);
     measuredValues = struct('MeanIntensity',zeros(1,size(imagestack,3)),'Area',zeros(1,size(imagestack,3)),'CenterX',zeros(1,size(imagestack,3)),'CenterY',zeros(1,size(imagestack,3)),'dF',zeros(1,size(imagestack,3)));
-    measuredAreas = zeros(max(Lmatrix(:)),frames);
+    measuredAreas = zeros(max(roiMask(:)),frames);
 
     dataResults=struct('MeanItensity',[zeros(length(frames))],'RoiArea',[],'dF',[zeros(length(frames))]);
     for frame = 1:frames
         % Check for Cancel button press
-        if getappdata(h,'canceling')
-            delete(h)
+        if getappdata(barhandle,'canceling')
+            delete(barhandle)
             error('Operation terminated by user');
         end
         
         %Update progress bar
-        waitbar(frame/frames,h,sprintf('ROI processing. Frame %i of %i',[frame,frames]));
+        waitbar(frame/frames,barhandle,sprintf('ROI processing. Frame %i of %i',[frame,frames]));
         
         %background = mean2(imagestack(:,:,frame));
         %background = mean(background);
@@ -21,7 +25,7 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)
         %image=imagestack(:,:,frame)-background;
         image=imagestack(:,:,frame);
 
-        stats=regionprops(Lmatrix,image,'MeanIntensity','WeightedCentroid','Area','PixelValues','PixelList');
+        stats=regionprops(roiMask,image,'MeanIntensity','WeightedCentroid','Area','PixelValues','PixelList');
         numROIs=length(stats);
         for j=1:numROIs
             measuredValues(j).MeanIntensity(frame)=stats(j).MeanIntensity;
@@ -56,10 +60,8 @@ function [measuredValues]=processROI(imagestack,Lmatrix,h,frameRate)
         f=measuredValues(roi).MeanIntensity;
         df=(f-f0)./f0;
         measuredValues(roi).dF=df;
-        measuredValues(roi).Time=(1:length(df))./frameRate;
+        measuredValues(roi).Time=(1:length(df))./handles.DataSet.frameRate;
     end
-    
-    
-    
-    delete(h);
+       
+    delete(barhandle);
 end

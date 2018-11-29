@@ -1,15 +1,15 @@
 function []=plotResults(handles)
 
 %DETERMINE WHETHER "FILTER ROIS" HAS BEEN RUN AND SELECT VALID ROIS
-if isfield(handles.dataset, 'validMeasuredValues')
-    measuredValues = handles.dataset.validMeasuredValues;
-    Lmatrix = handles.dataset.validLmatrix;
+if isfield(handles.DataSet, 'validMeasuredValues')
+    measuredValues = handles.DataSet.validMeasuredValues;
+    Lmatrix = handles.DataSet.validLmatrix;
 else
-    measuredValues = handles.dataset.measuredValues;
-Lmatrix=handles.dataset.Lmatrix;
+    measuredValues = handles.DataSet.measuredValues;
+    roiMask=handles.DataSet.roiMask;
 end
-frameRate = handles.dataset.frameRate;
-imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO TO OVERLAP ROIS.
+frameRate = handles.DataSet.frameRate;
+imageFrame1 = handles.ImageStack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO TO OVERLAP ROIS.
 
     %Return a blank figure if there are no ROIs detected in file
     if not(isfield(measuredValues,'ROInum'))
@@ -23,18 +23,9 @@ imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO 
         currFig = gcf;
         axes(handles.axes1);
         cla(handles.axes1);
-
         cidx = 0;
-
-        %Decide whether to use mask generated from file or Lmatrix mask from
-        %previously loaded video.
-        if true(get(handles.useCurrentROIs,'Value'))
-            roi_list = nonzeros(unique(handles.LmatrixFIXED));
-            mask = handles.LmatrixFIXED;
-        else
-            roi_list = nonzeros(unique(Lmatrix));
-            mask = Lmatrix;
-        end
+        roi_list = nonzeros(unique(roiMask));
+        mask = roiMask;
         imagesc(imageFrame1); hold on;
         for roi_index=1:length(roi_list)
             roi = roi_list(roi_index);
@@ -68,7 +59,7 @@ imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO 
         
         %DETERMINE WHETHER PLOTTING ORIGINAL OR FILTERED ROIS. THIS HAD TO
         %BE DONE BECAUSE THE TWO STRUCTURES WERE MADE DIFFERENTLY
-        if isfield(handles.dataset, 'validMeasuredValues')
+        if isfield(handles.DataSet, 'validMeasuredValues')
             for tracenum=1:size(measuredValues.dF,1)
                 signal = measuredValues.dF(tracenum,:);
                 traces(tracenum,:)=signal;
@@ -91,7 +82,7 @@ imageFrame1 = handles.dataset.imagestack(:,:,1); %DISPLAYS FIRST FRAME OF VIDEO 
                 plot(x,plottedTrace);
             end
             %CORRECT FOR DIFFERENCES BETWEEN VALID ROI STRUCTURES
-            if isfield(handles.dataset, 'validMeasuredValues')
+            if isfield(handles.DataSet, 'validMeasuredValues')
                 text(0,plottedTrace(1),num2str(measuredValues.ROInum(trace)))
             else
                 text(0,plottedTrace(1),num2str(measuredValues(trace).ROInum));
