@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 28-Nov-2018 15:12:45
+% Last Modified by GUIDE v2.5 29-Nov-2018 12:27:04
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -159,7 +159,7 @@ elseif strmatch(fileType,'tif')
     %Generate maximum dF projection to use for further processing
     dfStackMaxSmoothNorm = processImage(imageStack,handles);
     %Assign max dF projection into the guidata handles
-    handles.DataSet.projectionImages.maxdFoverFProj = dfStackMaxSmoothNorm;
+    handles.DataSet.projectionImages.dFMaxProj = dfStackMaxSmoothNorm;
     guidata(hObject,handles);%To save DataSet to handles
 
     %Display first frame after file loads.
@@ -788,7 +788,7 @@ if FileName~=0,
         roi_list = nonzeros(unique(roiMask));
         mask = roiMask;
         %PLOT MAX dF PROJECTION
-        imagesc(handles.DataSet.projectionImages.maxdFoverFProj); hold on;
+        imagesc(handles.DataSet.projectionImages.dFMaxProj); hold on;
         title('Maximum F-F_{0} Projection')
         for roi_index=1:length(roi_list)
             roi = roi_list(roi_index);
@@ -893,7 +893,7 @@ else
 
     roi_list = nonzeros(unique(roiMask));
     mask = roiMask;
-    maxdFProjImage = handles.DataSet.projectionImages.maxdFoverFProj;
+    maxdFProjImage = handles.DataSet.projectionImages.dFMaxProj;
     imagesc(maxdFProjImage); hold on;
     title('Maximum F-F_{0} Projection')
     for roi_index=1:length(roi_list)
@@ -1007,3 +1007,109 @@ function Save_ROI_Mask_Callback(hObject, eventdata, handles)
 
 roiMask = handles.DataSet.roiMask;
 uisave('roiMask');
+
+
+
+function roiBoxSize_Callback(hObject, eventdata, handles)
+% hObject    handle to roiBoxSize (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of roiBoxSize as text
+%        str2double(get(hObject,'String')) returns contents of roiBoxSize as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function roiBoxSize_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to roiBoxSize (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in GenerateRoiGrid.
+function GenerateRoiGrid_Callback(hObject, eventdata, handles)
+% hObject    handle to GenerateRoiGrid (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%Generate grid of ROIs
+gridSize=str2num(get(handles.roiBoxSize,'String'));
+height = size(handles.ImageStack,1);
+width = size(handles.ImageStack,2);
+mask = ones(height,width);
+mask(gridSize:gridSize:end,:)=0;
+mask(:,gridSize:gridSize:end)=0;
+%Number each ROI
+cc=bwconncomp(mask);
+roiMask = labelmatrix(cc);
+dfImage = handles.DataSet.projectionImages.dFMaxProj;
+roiData = regionprops(roiMask,dfImage,'MeanIntensity');
+
+roiIntensities = [roiData(:).MeanIntensity];
+
+cutoffThresh = mean(dfImage(:))+.5*(std(dfImage(:)));
+threshInd = roiIntensities < cutoffThresh;
+
+allROIs = 1:max(roiMask(:));
+badROIs = allROIs(threshInd);
+
+for roiNum = badROIs
+    badRoiInd = roiMask==roiNum;
+    roiMask(badRoiInd)=0; %Set bad ROI pixel values to 0 in the original mask
+end
+
+%Renumber remaining ROIs
+cc=bwconncomp(roiMask);
+roiMask = labelmatrix(cc);
+
+if max(roiMask)==0
+    currFig = gcf;
+    axes(handles.axes2);
+    cla(handles.axes2);
+    title('Maximum dF Projection')
+    xlabel('NO ROIS FOUND')
+else
+    %Plot the ROI overlay figure
+    currFig = gcf;
+    axes(handles.axes2);
+    cla(handles.axes2);
+    %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
+    colormap(defineGemColormap);
+    cidx = 0;
+
+    roi_list = nonzeros(unique(roiMask));
+    mask = roiMask;
+    maxdFProjImage = handles.DataSet.projectionImages.dFMaxProj;
+    imagesc(maxdFProjImage); hold on;
+    title('Maximum F-F_{0} Projection')
+    for roi_index=1:length(roi_list)
+        roi = roi_list(roi_index);
+        roi_mask = mask;
+        roi_mask(find(roi_mask~=roi))=0;
+        [B,L,N,A] = bwboundaries(roi_mask,'noholes');
+        colors=['b' 'g' 'r' 'c' 'm' 'y'];
+        cidx = mod(cidx,length(colors))+1; %Cycle through colors for drawing borders
+        for k=1:length(B),
+          boundary = B{k};
+          %cidx = mod(k,length(colors))+1;
+          plot(boundary(:,2), boundary(:,1),...
+               colors(cidx),'LineWidth',1);
+          %randomize text position for better visibility
+          rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
+          col = boundary(rndRow,2); row = boundary(rndRow,1);
+          %h = text(col+1, row-1, num2str(L(row,col)));
+          h = text(col+1, row-1, num2str(roi));
+          set(h,'Color',colors(cidx),'FontSize',14);
+        end
+
+    end
+    %Store the ROI mask (roiMask) into the figure handles structure
+    handles.DataSet.roiMask = roiMask;
+    guidata(hObject,handles);%To save DataSet to handles
+end
