@@ -1051,7 +1051,7 @@ roiData = regionprops(roiMask,dfImage,'MeanIntensity');
 
 roiIntensities = [roiData(:).MeanIntensity];
 
-cutoffThresh = mean(dfImage(:))+.5*(std(dfImage(:)));
+cutoffThresh = str2double(get(handles.thresholdLevel,'String'));
 threshInd = roiIntensities < cutoffThresh;
 
 allROIs = 1:max(roiMask(:));

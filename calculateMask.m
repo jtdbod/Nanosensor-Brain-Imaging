@@ -9,7 +9,7 @@ function [Lmatrix, mask]=calculateMask(handles)
 % ('graythresh') OR SET AS A FIXED PERCENTAGE USING INPUT FROM THE USER.
 
 userThreshold = str2double(get(handles.thresholdLevel,'String'));
-dfStackMaxSmoothNorm = handles.DataSet.projectionImages.maxdFoverFProj;
+dfStackMaxSmoothNorm = handles.DataSet.projectionImages.dFMaxProj;
 %ALGORITHMIC THRESHOLDING:
 %T=graythresh(dfStackMaxSmoothNorm)*(userThreshold./100);
 
