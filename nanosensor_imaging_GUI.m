@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 29-Nov-2018 12:27:04
+% Last Modified by GUIDE v2.5 07-Dec-2018 15:22:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1047,11 +1047,11 @@ mask(:,gridSize:gridSize:end)=0;
 cc=bwconncomp(mask);
 roiMask = labelmatrix(cc);
 dfImage = handles.DataSet.projectionImages.dFMaxProj;
-roiData = regionprops(roiMask,dfImage,'MeanIntensity');
+roiData = regionprops(roiMask,dfImage,'MaxIntensity');
 
-roiIntensities = [roiData(:).MeanIntensity];
+roiIntensities = [roiData(:).MaxIntensity];
 
-cutoffThresh = str2double(get(handles.thresholdLevel,'String'));
+cutoffThresh = str2double(get(handles.thresholdLevel,'String'))./100;
 threshInd = roiIntensities < cutoffThresh;
 
 allROIs = 1:max(roiMask(:));
@@ -1111,3 +1111,37 @@ else
     handles.DataSet.roiMask = roiMask;
     guidata(hObject,handles);%To save DataSet to handles
 end
+
+
+% --- Executes on button press in ShowAllRois.
+function ShowAllRois_Callback(hObject, eventdata, handles)
+% hObject    handle to ShowAllRois (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in PlotPeakdF.
+function PlotPeakdF_Callback(hObject, eventdata, handles)
+% hObject    handle to PlotPeakdF (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+currFig = gcf;
+axes(handles.axes3);
+cla(handles.axes3);
+roi_list = nonzeros(unique(handles.DataSet.roiMask));
+mask = handles.DataSet.roiMask;
+dFmask = zeros(size(mask,1),size(mask,2));
+
+for roi_index=1:length(roi_list)
+    roi = roi_list(roi_index);
+    index=find([handles.DataSet.measuredValues.ROInum]==roi);
+    roi_maxdF = max(handles.DataSet.measuredValues(index).dF);
+    dFmask(mask==roi)=roi_maxdF;
+end
+
+imagesc(dFmask);
+colorbar();
+colormap(handles.axes3,'jet')
+title('\Delta F/F_{0}')
