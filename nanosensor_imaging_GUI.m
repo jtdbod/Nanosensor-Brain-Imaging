@@ -142,13 +142,14 @@ end
 
 if strmatch(fileType,'spe')
     error('SPE is not supported in this version. Bug Travis and he will fix it in a few minutes');
-elseif strmatch(fileType,'tif')
+elseif FileName==0
+    %User cancelled open command. Do nothing.
+elseif strmatch(fileType,'tif') && any(FileName)
     %Make progress bar
     barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
             'CreateCancelBtn',...
             'setappdata(gcbf,''canceling'',1)');
     setappdata(barhandle,'canceling',0)
-
     %Load stack
     [imageStack]=loadIMstackTIF(PathName,FileName,1,barhandle);
     %ADD FILENAME AND IMAGESTACK DATA TO APPDATA
@@ -170,14 +171,14 @@ elseif strmatch(fileType,'tif')
     colormap(defineGemColormap);
     imagesc(imageStack(:,:,1));
     title('Frame 1')
+    cla(handles.axes2);
+    cla(handles.axes3);
+    
+    delete(barhandle);
+    guidata(hObject,handles);%To save DataSet to handles
 else
     error('Error. Filetype must be "tif" or "spe"');
 end
-
-delete(barhandle);
-guidata(hObject,handles);%To save DataSet to handles
-
-
 
 % --- Executes on button press in processfilebutton.
 function processfilebutton_Callback(hObject, eventdata, handles)
@@ -1077,6 +1078,9 @@ else
     currFig = gcf;
     axes(handles.axes2);
     cla(handles.axes2);
+    set(handles.axes2,'Ydir','reverse')
+    xlabel('')
+    ylabel('')
     %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
     colormap(defineGemColormap);
     cidx = 0;
@@ -1084,7 +1088,10 @@ else
     roi_list = nonzeros(unique(roiMask));
     mask = roiMask;
     maxdFProjImage = handles.DataSet.projectionImages.dFMaxProj;
-    imagesc(maxdFProjImage); hold on;
+    image=(mat2gray(maxdFProjImage));
+    imagesc(image); hold on;
+    colorbar();
+    
     title('Maximum F-F_{0} Projection')
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
