@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 07-Dec-2018 15:22:40
+% Last Modified by GUIDE v2.5 11-Dec-2018 15:22:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -103,7 +103,6 @@ if ~isequal(FileName,0)
     plotResults(handles);
    
     set(handles.CurrentFileLoaded,'String',FileName);
-    assignin('base','currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
     isLoaded=1;
     assignin('base','isLoaded',isLoaded);
     %Update listbox containing list of each ROI for selection
@@ -207,8 +206,7 @@ if isfield(handles,'ImageStack')
 
     if ~isempty(measuredValues)
         DataSet = handles.DataSet;
-        save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');
-        %assignin('base', 'currentDataset', handles.DataSet) %Adds all data for the loaded file to the current MATLAB workspace        
+        save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');      
         %PLOT THE RESULTS
         plotResults(handles);
         set(handles.CurrentFileLoaded,'String',handles.DataSet.fileName);
@@ -699,7 +697,6 @@ handles.DataSet = loadedData.DataSet;
 %Plot updated DataSet
 frameRate=str2double(get(handles.enterframerate,'String'));
 plotResults(handles);
-%assignin('base', 'currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
 
 %Update listbox containing list of each ROI for selection
 roiMask = handles.DataSet.roiMask;
@@ -1126,6 +1123,7 @@ function ShowAllRois_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+plotResults(handles);
 
 % --- Executes on button press in PlotPeakdF.
 function PlotPeakdF_Callback(hObject, eventdata, handles)
@@ -1152,3 +1150,31 @@ imagesc(dFmask);
 colorbar();
 colormap(handles.axes3,'jet')
 title('\Delta F/F_{0}')
+
+
+% --- Executes on button press in PlotAvgdFTrace.
+function PlotAvgdFTrace_Callback(hObject, eventdata, handles)
+% hObject    handle to PlotAvgdFTrace (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+traces = zeros(size(handles.DataSet.measuredValues,2),handles.DataSet.numFrames);
+for roiNum = 1:size(handles.DataSet.measuredValues,2)
+    traces(roiNum,:)=handles.DataSet.measuredValues(roiNum).dF;
+end
+
+meanTrace = mean(traces);
+
+currFig = gcf;
+axes(handles.axes2);
+cla(handles.axes2);
+plot(meanTrace);
+
+
+% --- Executes on button press in ExportToWorkspace.
+function ExportToWorkspace_Callback(hObject, eventdata, handles)
+% hObject    handle to ExportToWorkspace (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+clear currentDataset
+assignin('base','currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
