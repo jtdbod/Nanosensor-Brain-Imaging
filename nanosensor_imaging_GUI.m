@@ -419,7 +419,8 @@ axes(handles.axes2);
 hold off
 for i=1:size(measuredValues,2)
     
-    plot(measuredValues(i).dF)
+    t = [1:size(measuredValues(i).dF,2)]./handles.DataSet.frameRate;
+    plot(t,measuredValues(i).dF)
     hold on
     xlabel('Time (s)')
     ylabel('dF/F')
@@ -455,6 +456,7 @@ clusterIdx = kmeans(R,eva.OptimalK,'Replicates',5);
 Z = linkage(allTraces,'average','euclidean');
 clusterIdx = cluster(Z,5);
 dendrogram(Z,'ColorThreshold',3)
+title('Hierarchical Clustering')
 
 axes(handles.axes2);
 cla(handles.axes2);
@@ -469,6 +471,7 @@ for roiIdx = 1:size(clusterIdx,1)
 end
 
 set(handles.axes2,'Ydir','reverse')
+title('Hierarchical Clustering')
 colormap('jet')
 imagesc(mask)
 xlim([0 size(mask,2)])
@@ -1168,7 +1171,11 @@ meanTrace = mean(traces);
 currFig = gcf;
 axes(handles.axes2);
 cla(handles.axes2);
-plot(meanTrace);
+t = [1:size(meanTrace,2)]./handles.DataSet.frameRate;
+plot(t,meanTrace);
+title('Average dF/F Trace')
+xlabel('Time (s)')
+ylabel('dF/F')
 
 
 % --- Executes on button press in ExportToWorkspace.
