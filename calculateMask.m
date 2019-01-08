@@ -9,7 +9,8 @@ function [Lmatrix, mask]=calculateMask(handles)
 % ('graythresh') OR SET AS A FIXED PERCENTAGE USING INPUT FROM THE USER.
 
 userThreshold = str2double(get(handles.thresholdLevel,'String'));
-dfStackMaxSmoothNorm = handles.DataSet.projectionImages.dFMaxProj;
+dFMaxProj = handles.DataSet.projectionImages.dFMaxProj;
+dFMaxProjNorm = dFMaxProj./max(dFMaxProj(:));
 %ALGORITHMIC THRESHOLDING:
 %T=graythresh(dfStackMaxSmoothNorm)*(userThreshold./100);
 
@@ -20,7 +21,7 @@ dfStackMaxSmoothNorm = handles.DataSet.projectionImages.dFMaxProj;
 %USER SET THRESHOLD:
 T=userThreshold./100; %In percent
 
-mask1 = imbinarize(dfStackMaxSmoothNorm, T); %Threshold image
+mask1 = imbinarize(dFMaxProjNorm, T); %Threshold image
 strelsize=get(handles.strelSlider,'Value');
 se = strel('disk',strelsize);
 mask2 = imdilate(mask1,se); %Expands ROIs by "strelsize" provided by user
