@@ -882,6 +882,11 @@ numopens=get(handles.numopens_slider,'Value');
 
 
 if ~isfield(handles.DataSet.projectionImages,'meanProj')
+    currFig = gcf;
+    axes(handles.axes2);
+    cla(handles.axes2);
+    title('Calculating Mean Projection')
+    xlabel('')
     imageStack = handles.ImageStack;
     imstack = imageStack;
     if any(imageStack(:)<0)
@@ -895,6 +900,11 @@ if ~isfield(handles.DataSet.projectionImages,'meanProj')
 end
 
 if ~isfield(handles.DataSet.projectionImages,'dFProj')
+    currFig = gcf;
+    axes(handles.axes2);
+    cla(handles.axes2);
+    title('Calculating dF Projection')
+    xlabel('')
     imstack = handles.ImageStack;
     dFImage = imstack-handles.DataSet.projectionImages.meanProj;
     maxdFProjImage = max(dFImage,[],3);
