@@ -16,7 +16,7 @@ if not(isfield(measuredValues,'ROInum'))
     currFig = gcf;
     axes(handles.axes1);
     cla(handles.axes1);
-    imagesc(avgImage);
+    imagesc(imageFrame1);
     xlabel('NO ROIS FOUND')
 else
     %Plot the ROI overlay figure
@@ -89,6 +89,12 @@ else
         end
         hold on
     end
+    
+    %Plot an indicator of the stimulation point (if any).
+    stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
+    stimTime = stimFrameNumber./frameRate;
+    plot(stimTime*ones(100,1),linspace(0,max(plottedTrace)),'r-')
+    
     xlabel('Time (s)')
     ylabel('dF/F')
     axis tight

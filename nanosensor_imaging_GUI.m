@@ -422,9 +422,15 @@ for i=1:size(measuredValues,2)
     t = [1:size(measuredValues(i).dF,2)]./handles.DataSet.frameRate;
     plot(t,measuredValues(i).dF)
     hold on
-    xlabel('Time (s)')
-    ylabel('dF/F')
+
 end
+%Plot an indicator of the stimulation point (if any).
+stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
+stimTime = stimFrameNumber./handles.DataSet.frameRate;
+yl = ylim; %Get limits of the yaxis
+plot(stimTime*ones(100,1),linspace(yl(1),yl(2)),'r-')
+xlabel('Time (s)')
+ylabel('dF/F')
 
 
 % --- Executes on button press in CorrelationMatrix.
@@ -874,6 +880,31 @@ function CalculateROIs_Callback(hObject, eventdata, handles)
 strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
 
+
+if ~isfield(handles.DataSet.projectionImages,'meanProj')
+    imageStack = handles.ImageStack;
+    imstack = imageStack;
+    if any(imageStack(:)<0)
+        imstack = imageStack-min(imageStack(:));
+    end
+    
+    meanProjImage = mean(imstack,3);
+    meanProjImageFilt = medfilt2(meanProjImage,[3 3]);
+    handles.DataSet.projectionImages.meanProj = meanProjImageFilt;
+    guidata(hObject,handles);
+end
+
+if ~isfield(handles.DataSet.projectionImages,'dFProj')
+    imstack = handles.ImageStack;
+    dFImage = imstack-handles.DataSet.projectionImages.meanProj;
+    maxdFProjImage = max(dFImage,[],3);
+    maxdFProjImageFilt = medfilt2(maxdFProjImage,[4 4]);
+    handles.DataSet.projectionImages.dFMaxProj = maxdFProjImageFilt;
+    guidata(hObject,handles);
+end
+
+clear imstack dFImage
+
 [roiMask,~]=calculateMask(handles);
 if max(roiMask)==0
     currFig = gcf;
@@ -973,6 +1004,7 @@ function stimFrameNumber_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of stimFrameNumber as text
 %        str2double(get(hObject,'String')) returns contents of stimFrameNumber as a double
 sf=str2double(get(hObject,'String'));
+handles.DataSet.stimFrame = sf;
 %set(handles.stimFrameNumber,'string','Click Filter after loading data.');
 %sf is the stimulus frame, which will be passed to filter function
 
@@ -1173,6 +1205,11 @@ axes(handles.axes2);
 cla(handles.axes2);
 t = [1:size(meanTrace,2)]./handles.DataSet.frameRate;
 plot(t,meanTrace);
+%Plot an indicator of the stimulation point (if any).
+stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
+stimTime = stimFrameNumber./handles.DataSet.frameRate;
+yl = ylim; %Get limits of the yaxis
+plot(stimTime*ones(100,1),linspace(yl(1),yl(2)),'r-')
 title('Average dF/F Trace')
 xlabel('Time (s)')
 ylabel('dF/F')
