@@ -102,9 +102,11 @@ else
     %Plot heat map of all ROI activity using imagesc
     axes(handles.axes3);
     cla(handles.axes3);
+
     x=x;
     y=1:size(traces,1);
     imagesc(x,y,traces)
+    set(handles.axes3,'Ydir','normal')
     ylabel('ROI#');
     xlabel('Time (s)');
 end
