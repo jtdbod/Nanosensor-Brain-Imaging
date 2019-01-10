@@ -921,6 +921,7 @@ else
     currFig = gcf;
     axes(handles.axes2);
     cla(handles.axes2);
+    set(handles.axes2,'Ydir','reverse')
     %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
     colormap(defineGemColormap);
     cidx = 0;
