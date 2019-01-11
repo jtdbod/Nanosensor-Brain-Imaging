@@ -103,10 +103,12 @@ else
     axes(handles.axes3);
     cla(handles.axes3);
 
-    x=x;
     y=1:size(traces,1);
     imagesc(x,y,traces)
     set(handles.axes3,'Ydir','normal')
     ylabel('ROI#');
     xlabel('Time (s)');
+    caxis([min(traces(:)),max(traces(:))])
+    xlim([0,max(x)])
+    ylim([.5,max(y)+.5])
 end

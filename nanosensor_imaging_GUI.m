@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 11-Dec-2018 15:22:02
+% Last Modified by GUIDE v2.5 10-Jan-2019 14:10:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1227,3 +1227,96 @@ function ExportToWorkspace_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 clear currentDataset
 assignin('base','currentDataset', handles.DataSet) %Adds measuredValues for the loaded file to the current MATLAB workspace
+
+
+% --- Executes on button press in calculateTau.
+function calculateTau_Callback(hObject, eventdata, handles)
+% hObject    handle to calculateTau (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%Fit first order decay constants to each ROI trace. Give option to correct
+%drift as well as filter out motion artifact traces if they exhibit an
+%instantaneous rise time following stimulation. Adapted from code developed
+%by Abraham and Andrew.
+
+%Generate structure containing the dF/F traces, the number of the ROI, and 
+numberOfRois = size(handles.DataSet.measuredValues,2);
+numberOfFrames = size(handles.DataSet.measuredValues(1).dF,2)
+
+traces = struct('RoiNumber',{zeros(numberOfRois,1)},'dF',{zeros(numberOfFrames,1)});
+
+for roinum = 1:numberOfRois
+    traces(roinum).RoiNumber=handles.DataSet.measuredValues(roinum).ROInum;
+    traces(roinum).dF=handles.DataSet.measuredValues(roinum).dF';
+end
+
+%Make data compatible with Abraham/Andrew's first_order_curvefit.m analysis
+
+data = zeros(numberOfFrames,numberOfRois+1); %Add 1 for time dimension
+data(:,1) = 1:numberOfFrames; %This column is the time dimension (i.e. frame number)
+
+%Fill in dF/F values for each ROI (column)
+for roinum = 1:numberOfRois
+    data(:,roinum+1) = traces(roinum).dF;
+end
+
+flag = 0; %This indicates whether traces that look like motion artifacts are filtered out. Will implement a user defined checkbox for this later.
+
+
+stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
+[first_order_constants, first_order_fit] = first_order_curvefit(data, flag, handles);
+
+%Plot a stack of the fits over the original traces
+
+axes(handles.axes2);
+title('');
+cla(handles.axes2);
+set(handles.axes2,'Ydir','normal')
+hold on
+
+traceData = data(:,2:end)';
+x = 1:size(traceData,2);
+x=x./handles.DataSet.frameRate;
+for trace=1:size(traceData,1)
+    if trace==1
+        plot(x,traceData(trace,:));
+        plottedTrace=traceData(trace,:); %To stack traces on top of each other
+        plot(x,first_order_fit(:,trace));
+    else
+        offSet = max(plottedTrace);
+        plottedTrace = traceData(trace,:)+offSet;
+        plot(x,plottedTrace);
+        plot(x,first_order_fit(:,trace)+offSet);
+    end
+
+    %Label each trace by ROI num
+    text(0,plottedTrace(1),num2str(traces(trace).RoiNumber));
+
+    hold on
+end
+
+%Plot histogram of tau values
+axes(handles.axes3);
+title('');
+cla(handles.axes3);
+set(handles.axes3,'Ydir','normal')
+hold on
+xlabel('\tau (s^{-1})')
+ylabel('Counts')
+hist(first_order_constants(2,:));
+xlim auto
+ylim auto
+
+%Add tau and peak dF/F for each ROI
+
+for roinum = 1:numberOfRois
+    handles.DataSet.measuredValues(roinum).dFoFPeak = max(first_order_fit(:,roinum));
+    handles.DataSet.measuredValues(roinum).decayConstant = first_order_constants(2,roinum);
+end
+guidata(hObject,handles);%To save DataSet to handles
+%Update saved DataSet file
+DataSet = handles.DataSet;
+save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');
+clear DataSet
+    
