@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 10-Jan-2019 14:10:14
+% Last Modified by GUIDE v2.5 11-Jan-2019 15:45:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1171,7 +1171,7 @@ function PlotPeakdF_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
+%Plot an overlay of the ROIs that is color-coded by each ROI's peak dF/F
 currFig = gcf;
 axes(handles.axes3);
 cla(handles.axes3);
@@ -1190,6 +1190,11 @@ imagesc(dFmask);
 colorbar();
 colormap(handles.axes3,'jet')
 title('\Delta F/F_{0}')
+set(handles.axes3,'Ydir','reverse')
+xlim([0,size(dFmask,2)])
+ylim([0,size(dFmask,1)])
+set(gca,'colorscale','linear')
+caxis([0,median(nonzeros(dFmask(:)))+std(nonzeros(dFmask(:)))])
 
 
 % --- Executes on button press in PlotAvgdFTrace.
@@ -1242,7 +1247,7 @@ function calculateTau_Callback(hObject, eventdata, handles)
 
 %Generate structure containing the dF/F traces, the number of the ROI, and 
 numberOfRois = size(handles.DataSet.measuredValues,2);
-numberOfFrames = size(handles.DataSet.measuredValues(1).dF,2)
+numberOfFrames = size(handles.DataSet.measuredValues(1).dF,2);
 
 traces = struct('RoiNumber',{zeros(numberOfRois,1)},'dF',{zeros(numberOfFrames,1)});
 
@@ -1263,9 +1268,31 @@ end
 
 flag = 0; %This indicates whether traces that look like motion artifacts are filtered out. Will implement a user defined checkbox for this later.
 
-
-stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
-[first_order_constants, first_order_fit] = first_order_curvefit(data, flag, handles);
+%Check if decay constants have been calculated already
+if ~isfield(handles.DataSet.measuredValues,'decayFit')
+    %Calculate first order decay constants and linear fits
+    stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
+    [first_order_constants, first_order_fit] = first_order_curvefit(data, flag, handles);
+    decayConstants = first_order_constants(2,:);
+    %Add tau and peak dF/F for each ROI to gui handles
+    for roinum = 1:numberOfRois
+        handles.DataSet.measuredValues(roinum).dFoFPeak = max(first_order_fit(:,roinum));
+        handles.DataSet.measuredValues(roinum).decayConstant = decayConstants(roinum);
+        handles.DataSet.measuredValues(roinum).decayFit = first_order_fit(:,roinum);
+    end
+    guidata(hObject,handles);%To save DataSet to handles
+    %Update saved DataSet file
+    DataSet = handles.DataSet;
+    save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');
+    clear DataSet
+else
+        decayConstants=[];
+        first_order_fit=[];
+    for i=1:size(handles.DataSet.measuredValues,2)
+        first_order_fit(:,i) = handles.DataSet.measuredValues(i).decayFit;
+        decayConstants(i) = handles.DataSet.measuredValues(i).decayConstant;
+    end
+end
 
 %Plot a stack of the fits over the original traces
 
@@ -1304,19 +1331,42 @@ set(handles.axes3,'Ydir','normal')
 hold on
 xlabel('\tau (s^{-1})')
 ylabel('Counts')
-hist(first_order_constants(2,:));
+hist(decayConstants);
 xlim auto
 ylim auto
-
-%Add tau and peak dF/F for each ROI
-
-for roinum = 1:numberOfRois
-    handles.DataSet.measuredValues(roinum).dFoFPeak = max(first_order_fit(:,roinum));
-    handles.DataSet.measuredValues(roinum).decayConstant = first_order_constants(2,roinum);
-end
-guidata(hObject,handles);%To save DataSet to handles
-%Update saved DataSet file
-DataSet = handles.DataSet;
-save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');
-clear DataSet
     
+
+
+% --- Executes on button press in ColorByTau.
+function ColorByTau_Callback(hObject, eventdata, handles)
+% hObject    handle to ColorByTau (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%Plot an overlay of the ROIs that is color-coded by each ROI's peak dF/F
+currFig = gcf;
+axes(handles.axes3);
+cla(handles.axes3);
+roi_list = nonzeros(unique(handles.DataSet.roiMask));
+mask = handles.DataSet.roiMask;
+decayMask = zeros(size(mask,1),size(mask,2));
+
+for roi_index=1:length(roi_list)
+    roi = roi_list(roi_index);
+    index=find([handles.DataSet.measuredValues.ROInum]==roi);
+    roi_decayConstant = handles.DataSet.measuredValues(index).decayConstant;
+    decayMask(mask==roi)=roi_decayConstant;
+end
+
+imagesc(decayMask);
+colorbar();
+colormap(handles.axes3,'jet')
+title('\Delta F/F_{0}')
+set(handles.axes3,'Ydir','reverse')
+xlim([0,size(decayMask,2)])
+ylim([0,size(decayMask,1)])
+xlabel('')
+ylabel('')
+title('Decay Constant (s^{-1})')
+set(gca,'colorscale','log')
+caxis([0,median(nonzeros(decayMask(:)))+std(nonzeros(decayMask(:)))])
