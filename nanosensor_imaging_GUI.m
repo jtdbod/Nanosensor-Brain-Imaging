@@ -1209,6 +1209,14 @@ for roiNum = 1:size(handles.DataSet.measuredValues,2)
 end
 
 meanTrace = mean(traces);
+%Flag = 0 -> No smoothing or baseline correction
+flag=0;
+%Calculate decay constants
+data = zeros(size(traces,2),2);
+data(:,1)=1:size(traces,2); %Make first column = frame number for compatibility with 'first_order_curvefit()'
+data(:,2)=meanTrace;
+[first_order_constants, first_order_fit] = first_order_curvefit(data, flag, handles);
+decayConstant = first_order_constants(2);
 
 currFig = gcf;
 axes(handles.axes2);
@@ -1219,10 +1227,17 @@ plot(t,meanTrace);
 stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
 stimTime = stimFrameNumber./handles.DataSet.frameRate;
 yl = ylim; %Get limits of the yaxis
-plot(stimTime*ones(100,1),linspace(yl(1),yl(2)),'r-')
+plot(stimTime*ones(100,1),linspace(yl(1),yl(2)),'k--')
+hold on
+plot(t,first_order_fit);
 title('Average dF/F Trace')
 xlabel('Time (s)')
 ylabel('dF/F')
+maxY=max(nonzeros(first_order_fit));
+minY=min(nonzeros(first_order_fit));
+ypos = (maxY-minY)./2+minY;
+xpos = mean(find(first_order_fit))./handles.DataSet.frameRate;
+text(xpos,ypos,['tau = ' num2str(decayConstant) ' s^{-1}'])
 
 
 % --- Executes on button press in ExportToWorkspace.
@@ -1322,6 +1337,7 @@ for trace=1:size(traceData,1)
 
     hold on
 end
+axis tight
 
 %Plot histogram of tau values
 axes(handles.axes3);

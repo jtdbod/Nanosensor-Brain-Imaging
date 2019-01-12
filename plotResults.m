@@ -27,6 +27,8 @@ else
     roi_list = nonzeros(unique(roiMask));
     mask = roiMask;
     imagesc(imageFrame1); hold on;
+    xlim([0,size(mask,2)])
+    ylim([0,size(mask,1)])
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
         roi_mask = mask;
