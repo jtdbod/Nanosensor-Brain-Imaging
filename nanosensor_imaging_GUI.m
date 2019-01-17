@@ -1478,5 +1478,6 @@ end
         1 0 0];
     colormap(handles.axes3,map);
     caxis([0,1]);
+    title('')
     
 
