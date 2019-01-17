@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 11-Jan-2019 15:45:00
+% Last Modified by GUIDE v2.5 17-Jan-2019 13:49:59
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1386,3 +1386,97 @@ ylabel('')
 title('Decay Constant (s^{-1})')
 set(gca,'colorscale','log')
 caxis([0,median(nonzeros(decayMask(:)))+std(nonzeros(decayMask(:)))])
+
+
+% --- Executes on button press in classifyTraces.
+function classifyTraces_Callback(hObject, eventdata, handles)
+% hObject    handle to classifyTraces (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+transientIndices = zeros(size(handles.DataSet.measuredValues,2),size(handles.DataSet.measuredValues(1).dF,2));
+numROIs = size(handles.DataSet.measuredValues,2);
+for roiNum = 1:numROIs
+    dFF = handles.DataSet.measuredValues(roiNum).dF;
+    [handles transientIndex] = classifyTransients(handles, dFF);
+    transientIndices(roiNum,:) = transientIndex;
+end
+
+%Plot traces color coded according to transientIndex
+%Plot all dF/F traces
+    axes(handles.axes2);
+    title('');
+    cla(handles.axes2);
+    set(handles.axes2,'Ydir','normal')
+    hold on
+    measuredValues = handles.DataSet.measuredValues;
+    for tracenum=1:size(measuredValues,2)
+        signal = measuredValues(tracenum).dF;
+        traces(tracenum,:)=signal;
+    end
+    x = 1:size(traces,2);
+    x=x./handles.DataSet.frameRate;
+    for trace=1:size(traces,1)
+        if trace==1
+            y = traces(trace,:);
+            plot(x,y,'k');
+            CC = bwconncomp(transientIndices(trace,:));
+            L = labelmatrix(CC);
+            hold on
+            if max(L)>0
+                for i = 1:max(L)
+                    transientY = y(find(L==i));
+                    transientX = x(find(L==i));
+                    plot(transientX,transientY,'r-')
+                end
+            end
+            %plot(transientX,transientY,'r-');
+            plottedTrace=y; %To stack traces on top of each other
+            
+        else
+            y=traces(trace,:);
+            y = y+max(plottedTrace);
+            plot(x,y,'k');
+            hold on
+            CC = bwconncomp(transientIndices(trace,:));
+            L = labelmatrix(CC);
+            if max(L)>0
+                for i = 1:max(L)
+                    transientY = y(find(L==i));
+                    transientX = x(find(L==i));
+                    plot(transientX,transientY,'r-')
+                end
+            end
+            %plot(transientX,transientY,'r-');
+            plottedTrace=y; %To stack traces on top of each other
+            
+            
+        end
+        hold on
+    end
+    %Plot an indicator of the stimulation point (if any).
+    stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
+    stimTime = stimFrameNumber./handles.DataSet.frameRate;
+    plot(stimTime*ones(100,1),linspace(0,max(plottedTrace)),'r-')
+    
+    xlabel('Time (s)')
+    ylabel('dF/F')
+    axis tight
+    %Plot heat map of all classified transients
+    axes(handles.axes3);
+    cla(handles.axes3);
+
+    y=1:size(traces,1);
+    imagesc(x,y,transientIndices)
+    set(handles.axes3,'Ydir','normal')
+    ylabel('ROI#');
+    xlabel('Time (s)');
+    caxis([min(traces(:)),max(traces(:))])
+    xlim([0,max(x)])
+    ylim([.5,max(y)+.5])
+    map = [1 1 1
+        1 0 0];
+    colormap(handles.axes3,map);
+    caxis([0,1]);
+    
+
