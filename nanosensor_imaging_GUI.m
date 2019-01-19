@@ -1347,7 +1347,8 @@ set(handles.axes3,'Ydir','normal')
 hold on
 xlabel('\tau (s^{-1})')
 ylabel('Counts')
-hist(decayConstants);
+%hist(decayConstants(find(and(decayConstants<1,decayConstants>0))),20);
+hist(decayConstants,20);
 xlim auto
 ylim auto
     
@@ -1384,8 +1385,10 @@ ylim([0,size(decayMask,1)])
 xlabel('')
 ylabel('')
 title('Decay Constant (s^{-1})')
-set(gca,'colorscale','log')
-caxis([0,median(nonzeros(decayMask(:)))+std(nonzeros(decayMask(:)))])
+set(gca,'colorscale','linear')
+%set(gca,'colorscale','linear')
+%caxis([0,median(nonzeros(decayMask(:)))+std(nonzeros(decayMask(:)))])
+caxis('auto')
 
 
 % --- Executes on button press in classifyTraces.
@@ -1416,9 +1419,13 @@ end
     end
     x = 1:size(traces,2);
     x=x./handles.DataSet.frameRate;
+
     for trace=1:size(traces,1)
+        %Calculate a moving baseline
+        filterWidth = 10*handles.DataSet.frameRate; %In frames
+        baseline = movmean(traces(trace,:),filterWidth);
         if trace==1
-            y = traces(trace,:);
+            y = traces(trace,:)-baseline;
             plot(x,y,'k');
             CC = bwconncomp(transientIndices(trace,:));
             L = labelmatrix(CC);
@@ -1431,10 +1438,11 @@ end
                 end
             end
             %plot(transientX,transientY,'r-');
-            plottedTrace=y; %To stack traces on top of each other
+            plottedTrace=y-baseline; %To stack traces on top of each other
             
         else
-            y=traces(trace,:);
+            
+            y=traces(trace,:)-baseline;
             y = y+max(plottedTrace);
             plot(x,y,'k');
             hold on
@@ -1480,4 +1488,5 @@ end
     caxis([0,1]);
     title('')
     
-
+handles.DataSet.transients = transientIndices;
+guidata(hObject,handles);%To save roiMaskFIXED to handles

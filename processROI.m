@@ -52,7 +52,8 @@ function [measuredValues]=processROI(handles,barhandle)
     end
     %fprintf(1,'%d',frame)
     %fprintf('\n')
-
+    
+    %{
     %Calculate dF/F using first 5% of frames frames as F0
     F0 = floor(frames*0.05); %Make F0 the average of the first 5% of frames).
     for roi=1:numROIs
@@ -62,6 +63,15 @@ function [measuredValues]=processROI(handles,barhandle)
         measuredValues(roi).dF=df;
         measuredValues(roi).Time=(1:length(df))./handles.DataSet.frameRate;
     end
-       
+    %}
+    %Calculate dF/F using average of 50 previous frames
+    for roi=1:numROIs
+        stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
+        f0=mean(measuredValues(roi).MeanIntensity(stimFrameNumber-50:stimFrameNumber));
+        f=measuredValues(roi).MeanIntensity;
+        df=(f-f0)./f0;
+        measuredValues(roi).dF=df;
+        measuredValues(roi).Time=(1:length(df))./handles.DataSet.frameRate;
+    end
     delete(barhandle);
 end
