@@ -1237,7 +1237,7 @@ maxY=max(nonzeros(first_order_fit));
 minY=min(nonzeros(first_order_fit));
 ypos = (maxY-minY)./2+minY;
 xpos = mean(find(first_order_fit))./handles.DataSet.frameRate;
-text(xpos,ypos,['tau = ' num2str(1/decayConstant) ' s'])
+text(xpos,ypos,['tau = ' num2str(round(1/decayConstant,1)) ' s'])
 
 
 % --- Executes on button press in ExportToWorkspace.
