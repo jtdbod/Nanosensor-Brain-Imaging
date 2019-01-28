@@ -1213,7 +1213,7 @@ meanTrace = mean(traces);
 flag=0;
 %Calculate decay constants
 data = zeros(size(traces,2),2);
-data(:,1)=1:size(traces,2); %Make first column = frame number for compatibility with 'first_order_curvefit()'
+data(:,1)=(1:size(traces,2))./handles.DataSet.frameRate; %Make first column = frame number for compatibility with 'first_order_curvefit()'
 data(:,2)=meanTrace;
 [first_order_constants, first_order_fit] = first_order_curvefit(data, flag, handles);
 decayConstant = first_order_constants(2);
@@ -1237,7 +1237,7 @@ maxY=max(nonzeros(first_order_fit));
 minY=min(nonzeros(first_order_fit));
 ypos = (maxY-minY)./2+minY;
 xpos = mean(find(first_order_fit))./handles.DataSet.frameRate;
-text(xpos,ypos,['tau = ' num2str(decayConstant) ' s^{-1}'])
+text(xpos,ypos,['tau = ' num2str(1/decayConstant) ' s'])
 
 
 % --- Executes on button press in ExportToWorkspace.
@@ -1274,7 +1274,7 @@ end
 %Make data compatible with Abraham/Andrew's first_order_curvefit.m analysis
 
 data = zeros(numberOfFrames,numberOfRois+1); %Add 1 for time dimension
-data(:,1) = 1:numberOfFrames; %This column is the time dimension (i.e. frame number)
+data(:,1) = (1:numberOfFrames)./handles.DataSet.frameRate; %This column is the time dimension (seconds)
 
 %Fill in dF/F values for each ROI (column)
 for roinum = 1:numberOfRois
@@ -1345,10 +1345,10 @@ title('');
 cla(handles.axes3);
 set(handles.axes3,'Ydir','normal')
 hold on
-xlabel('\tau (s^{-1})')
+xlabel('\tau (s)')
 ylabel('Counts')
 %hist(decayConstants(find(and(decayConstants<1,decayConstants>0))),20);
-hist(decayConstants,20);
+hist(1./decayConstants,20);
 xlim auto
 ylim auto
     
