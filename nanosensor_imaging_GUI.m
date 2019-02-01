@@ -1348,7 +1348,10 @@ hold on
 xlabel('\tau (s)')
 ylabel('Counts')
 %hist(decayConstants(find(and(decayConstants<1,decayConstants>0))),20);
-hist(1./decayConstants,20);
+%Filter out strong outliers for tau, i.e. anything that is impossible
+tauRange = (1./decayConstants)<60; %Filter out anything over 60 seconds, which would be unreasonable
+hist(1./decayConstants(tauRange),20);
+
 xlim auto
 ylim auto
     
@@ -1367,15 +1370,18 @@ cla(handles.axes3);
 roi_list = nonzeros(unique(handles.DataSet.roiMask));
 mask = handles.DataSet.roiMask;
 decayMask = zeros(size(mask,1),size(mask,2));
+tauMask = zeros(size(mask,1),size(mask,2));
 
 for roi_index=1:length(roi_list)
     roi = roi_list(roi_index);
     index=find([handles.DataSet.measuredValues.ROInum]==roi);
     roi_decayConstant = handles.DataSet.measuredValues(index).decayConstant;
     decayMask(mask==roi)=roi_decayConstant;
+    roi_tauConstant = 1./handles.DataSet.measuredValues(index).decayConstant;
+    tauMask(mask==roi)=roi_tauConstant;
 end
 
-imagesc(decayMask);
+imagesc(tauMask);
 colorbar();
 colormap(handles.axes3,'jet')
 title('\Delta F/F_{0}')
