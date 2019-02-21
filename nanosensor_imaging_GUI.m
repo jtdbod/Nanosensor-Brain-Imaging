@@ -22,7 +22,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 19-Feb-2019 15:16:42
+% Last Modified by GUIDE v2.5 21-Feb-2019 10:31:55
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -235,7 +235,13 @@ if isfield(handles,'ImageStack')
 
     if ~isempty(measuredValues)
         DataSet = handles.DataSet;
-        save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');      
+        specifyFilename = get(handles.specifyFilenameFlag,'Value');
+        if specifyFilename
+            [file path] = uiputfile('*.mat');
+            save(strcat(path,file));
+        else
+            save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');      
+        end
         %PLOT THE RESULTS
         plotResults(handles);
         set(handles.CurrentFileLoaded,'String',handles.DataSet.fileName);
@@ -269,6 +275,13 @@ strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
 handles = batchProcessVideos(fileType,frameRate,strelsize,numopens,handles);
 guidata(hObject,handles);%To save DataSet to handles
+%{
+%Need to rewrite to do the following
+1> Select directory and get all filenames of tif files
+2> Load each tif file into memory
+3> For each, apply either "ROI gen" or "Grid ROI gen"
+4> Process all ROIs and save the data
+%}
 
 
 function [frameRate]=enterframerate_Callback(hObject, eventdata, handles)
@@ -1553,3 +1566,12 @@ end
 %caxis([0,median(nonzeros(decayMask(:)))+std(nonzeros(decayMask(:)))])
 %caxis('auto')
 caxis([0,5])
+
+
+% --- Executes on button press in specifyFilenameFlag.
+function specifyFilenameFlag_Callback(hObject, eventdata, handles)
+% hObject    handle to specifyFilenameFlag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of specifyFilenameFlag
