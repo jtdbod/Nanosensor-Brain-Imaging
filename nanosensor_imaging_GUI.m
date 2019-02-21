@@ -1088,6 +1088,7 @@ dfImage = handles.DataSet.projectionImages.dFMaxProj;
 roiData = regionprops(roiMask,dfImage,'MaxIntensity');
 
 roiIntensities = [roiData(:).MaxIntensity];
+roiIntensities = roiIntensities./max(roiIntensities(:));
 
 cutoffThresh = str2double(get(handles.thresholdLevel,'String'))./100;
 threshInd = roiIntensities < cutoffThresh;
@@ -1118,6 +1119,7 @@ else
     set(handles.axes2,'Ydir','reverse')
     xlabel('')
     ylabel('')
+    caxis('auto')
     %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
     colormap(defineGemColormap);
     cidx = 0;
