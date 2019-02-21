@@ -1197,7 +1197,11 @@ title('\Delta F/F_{0}')
 set(handles.axes3,'Ydir','reverse')
 xlim([0,size(dFmask,2)])
 ylim([0,size(dFmask,1)])
+installVersion = version;
+currentMatlabInstall = str2num(installVersion(1:3));
+if currentMatlabInstall > 9.4;
 set(gca,'colorscale','linear')
+end
 caxis([0,median(nonzeros(dFmask(:)))+std(nonzeros(dFmask(:)))])
 
 
@@ -1397,7 +1401,11 @@ ylim([0,size(decayMask,1)])
 xlabel('')
 ylabel('')
 title('\tau (s)')
+installVersion = version;
+currentMatlabInstall = str2num(installVersion(1:3));
+if currentMatlabInstall > 9.4;
 set(gca,'colorscale','linear')
+end
 %set(gca,'colorscale','linear')
 %caxis([0,median(nonzeros(decayMask(:)))+std(nonzeros(decayMask(:)))])
 caxis('auto')
@@ -1534,7 +1542,11 @@ ylim([0,size(timetoPeakMask,1)])
 xlabel('')
 ylabel('')
 title('Time to Peak (s)')
+installVersion = version;
+currentMatlabInstall = str2num(installVersion(1:3));
+if currentMatlabInstall > 9.4;
 set(gca,'colorscale','linear')
+end
 %set(gca,'colorscale','linear')
 %caxis([0,median(nonzeros(decayMask(:)))+std(nonzeros(decayMask(:)))])
 %caxis('auto')
