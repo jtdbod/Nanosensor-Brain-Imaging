@@ -214,50 +214,8 @@ function processfilebutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if isfield(handles,'ImageStack')
-    %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
-    colormap(defineGemColormap);
-    %Make progress bar
-    barhandle = waitbar(0,'ROI processing. Frame %i of %i','Name',sprintf('Processing File 1 of 1'),...
-            'CreateCancelBtn',...
-            'setappdata(gcbf,''canceling'',1)');
-    setappdata(barhandle,'canceling',0)
-
-    %CALCULATE SIZE, VALUES ETC. FOR EACH ROI (stored in roiMask) GENERATED
-    %BY BUTTON PRESS OR LOADED FROM PREVIOUS FILE
-    handles.DataSet.frameRate = str2double(get(handles.enterframerate,'String'));
-    handles.DataSet.thresholdValue = str2double(get(handles.thresholdLevel,'String'));
-    [measuredValues]=processROI(handles,barhandle);
-
-    handles.DataSet.measuredValues = measuredValues;
-    
-    guidata(hObject,handles);%To save DataSet to handles
-
-    if ~isempty(measuredValues)
-        DataSet = handles.DataSet;
-        specifyFilename = get(handles.specifyFilenameFlag,'Value');
-        if specifyFilename
-            [file path] = uiputfile('*.mat');
-            save(strcat(path,file));
-        else
-            save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');      
-        end
-        %PLOT THE RESULTS
-        plotResults(handles);
-        set(handles.CurrentFileLoaded,'String',handles.DataSet.fileName);
-        delete(barhandle);
-    end
-else
-    error('Please load imagestack first.')
-end
-
-
-
-%Generate listbox containing list of each ROI for selection
-roiNames = nonzeros(unique(handles.DataSet.roiMask));
-roiNamesStr = num2str(roiNames);
-set(handles.roi_listbox,'Value',1); %Set "selected" listbox value to 1 to prevent error
-set(handles.roi_listbox,'string',roiNamesStr);
+handles = processTifFile(handles);
+guidata(hObject,handles);
 
 
 % --- Executes on button press in batchprocessbutton.
@@ -265,16 +223,104 @@ function batchprocessbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to batchprocessbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-frameRate=str2double(get(handles.enterframerate,'String'));
-if true(get(handles.radiobuttonSPE,'Value'))
-    fileType = 'spe';
-elseif true(get(handles.radiobuttonTIF,'Value'))
-    fileType = 'tif';
+
+selpath = uigetdir;
+tifFiles = dir(strcat(selpath,'/*.tif'));
+
+for file = 1:size(tifFiles,1)
+
+    %CREATE DATASTRUCTURE FOR USER DATA AND STORE IN GUI HANDLES
+    handles.DataSet = struct('frameRate',{},'fileName',{},'pathName',{'PathName'},'roiMask',{},'measuredValues',{},...
+        'projectionImages',{},'thresholdValue',{},'numFrames',{},'stimFrames',{});
+    handles.ImageStack = [];
+
+    %LOAD A VIDEO STACK INTO APPDATA MEMORY (EITHER TIF OR SPE)
+    if true(get(handles.radiobuttonSPE,'Value'))
+        fileType = 'spe';
+    elseif true(get(handles.radiobuttonTIF,'Value'))
+        fileType = 'tif';
+    end
+
+    %[FileName,PathName,~] = uigetfile(strcat('*.',fileType));
+    FileName = tifFiles(file).name;
+    PathName = selpath;
+
+    if strmatch(fileType,'spe')
+        error('SPE is not supported in this version. Bug Travis and he will fix it in a few minutes');
+    elseif FileName==0
+        %User cancelled open command. Do nothing.
+    elseif strmatch(fileType,'tif') && any(FileName)
+        %Make progress bar
+        barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
+                'CreateCancelBtn',...
+                'setappdata(gcbf,''canceling'',1)');
+        setappdata(barhandle,'canceling',0)
+        %Load stack
+        [imageStack]=loadIMstackTIF(PathName,FileName,1,barhandle);
+        %ADD FILENAME AND IMAGESTACK DATA TO APPDATA
+        handles.DataSet(1).fileName = FileName;
+        handles.DataSet.pathName = PathName;
+        handles.ImageStack = imageStack;
+        handles.DataSet.projectionImages.f0 = mean(imageStack(:,:,1:5),3);
+        fileinfo=imfinfo(strcat(PathName,'/',FileName));
+        handles.DataSet.numFrames=size(fileinfo,1);
+        %Generate Mean Projection and dF Max Projecitons and store in handles
+        if ~isfield(handles.DataSet.projectionImages,'meanProj')
+        currFig = gcf;
+        axes(handles.axes1);
+        cla(handles.axes1);
+        title('Calculating Mean Projection')
+        xlabel('')
+        imageStack = handles.ImageStack;
+        imstack = imageStack;
+        if any(imageStack(:)<0)
+            imstack = imageStack-min(imageStack(:));
+        end
+
+        meanProjImage = mean(imstack,3);
+        meanProjImageFilt = medfilt2(meanProjImage,[3 3]);
+        handles.DataSet.projectionImages.meanProj = meanProjImageFilt;
+        guidata(hObject,handles);
+        end
+
+        if ~isfield(handles.DataSet.projectionImages,'dFMaxProj')
+        currFig = gcf;
+        axes(handles.axes1);
+        cla(handles.axes1);
+        title('Calculating dF Projection')
+        xlabel('')
+        imstack = handles.ImageStack;
+        dFImage = imstack-handles.DataSet.projectionImages.meanProj;
+        maxdFProjImage = max(dFImage,[],3);
+        maxdFProjImageFilt = medfilt2(maxdFProjImage,[4 4]);
+        handles.DataSet.projectionImages.dFMaxProj = maxdFProjImageFilt;
+        guidata(hObject,handles);
+        end
+        clear imstack dFImage
+        guidata(hObject,handles);%To save DataSet to handles
+
+        %Display first frame after file loads.
+        axes(handles.axes1);
+        cla(handles.axes1);
+        colormap(defineGemColormap);
+        imagesc(imageStack(:,:,1));
+        title('Frame 1')
+        cla(handles.axes2);
+        cla(handles.axes3);
+
+        delete(barhandle);
+        guidata(hObject,handles);%To save DataSet to handles
+    else
+        error('Error. Filetype must be "tif" or "spe"');
+    end
+
+
+    handles = generateGrid(handles);
+    guidata(hObject,handles);
+    handles = processTifFile(handles);
+    guidata(hObject,handles);
 end
-strelsize=get(handles.strelSlider,'Value');
-numopens=get(handles.numopens_slider,'Value');
-handles = batchProcessVideos(fileType,frameRate,strelsize,numopens,handles);
-guidata(hObject,handles);%To save DataSet to handles
+
 %{
 %Need to rewrite to do the following
 1> Select directory and get all filenames of tif files
@@ -1087,89 +1133,8 @@ function GenerateRoiGrid_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%Generate grid of ROIs
-gridSize=str2num(get(handles.roiBoxSize,'String'));
-height = size(handles.ImageStack,1);
-width = size(handles.ImageStack,2);
-mask = ones(height,width);
-mask(gridSize:gridSize:end,:)=0;
-mask(:,gridSize:gridSize:end)=0;
-%Number each ROI
-cc=bwconncomp(mask);
-roiMask = labelmatrix(cc);
-dfImage = handles.DataSet.projectionImages.dFMaxProj;
-roiData = regionprops(roiMask,dfImage,'MaxIntensity');
-
-roiIntensities = [roiData(:).MaxIntensity];
-roiIntensities = roiIntensities./max(roiIntensities(:));
-
-cutoffThresh = str2double(get(handles.thresholdLevel,'String'))./100;
-threshInd = roiIntensities < cutoffThresh;
-
-allROIs = 1:max(roiMask(:));
-badROIs = allROIs(threshInd);
-
-for roiNum = badROIs
-    badRoiInd = roiMask==roiNum;
-    roiMask(badRoiInd)=0; %Set bad ROI pixel values to 0 in the original mask
-end
-
-%Renumber remaining ROIs
-cc=bwconncomp(roiMask);
-roiMask = labelmatrix(cc);
-
-if max(roiMask)==0
-    currFig = gcf;
-    axes(handles.axes2);
-    cla(handles.axes2);
-    title('Maximum dF Projection')
-    xlabel('NO ROIS FOUND')
-else
-    %Plot the ROI overlay figure
-    currFig = gcf;
-    axes(handles.axes2);
-    cla(handles.axes2);
-    set(handles.axes2,'Ydir','reverse')
-    xlabel('')
-    ylabel('')
-    caxis('auto')
-    %Define colormap (Gem adapted from ImageJ, Abraham's favorite)
-    colormap(defineGemColormap);
-    cidx = 0;
-
-    roi_list = nonzeros(unique(roiMask));
-    mask = roiMask;
-    maxdFProjImage = handles.DataSet.projectionImages.dFMaxProj;
-    image=(mat2gray(maxdFProjImage));
-    imagesc(image); hold on;
-    colorbar();
-    
-    title('Maximum F-F_{0} Projection')
-    for roi_index=1:length(roi_list)
-        roi = roi_list(roi_index);
-        roi_mask = mask;
-        roi_mask(find(roi_mask~=roi))=0;
-        [B,L,N,A] = bwboundaries(roi_mask,'noholes');
-        colors=['b' 'g' 'r' 'c' 'm' 'y'];
-        cidx = mod(cidx,length(colors))+1; %Cycle through colors for drawing borders
-        for k=1:length(B),
-          boundary = B{k};
-          %cidx = mod(k,length(colors))+1;
-          plot(boundary(:,2), boundary(:,1),...
-               colors(cidx),'LineWidth',1);
-          %randomize text position for better visibility
-          rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
-          col = boundary(rndRow,2); row = boundary(rndRow,1);
-          %h = text(col+1, row-1, num2str(L(row,col)));
-          h = text(col+1, row-1, num2str(roi));
-          set(h,'Color',colors(cidx),'FontSize',14);
-        end
-
-    end
-    %Store the ROI mask (roiMask) into the figure handles structure
-    handles.DataSet.roiMask = roiMask;
-    guidata(hObject,handles);%To save DataSet to handles
-end
+handles = generateGrid(handles);
+guidata(hObject,handles);
 
 
 % --- Executes on button press in ShowAllRois.
