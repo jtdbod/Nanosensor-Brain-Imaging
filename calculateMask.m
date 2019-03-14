@@ -1,4 +1,4 @@
-function [Lmatrix, mask]=calculateMask(handles)
+function [Lmatrix, mask, dfofMaxProjection]=calculateMask(handles)
 % GENERATES A BINARY MASK THAT HIGHLIGHTS REGIONS OF INTEREST (ROIS) BASED
 % ON AN INTENSITY THRESHOLD CUTOFF AND THE THE MAXIMUM PROJECTION OF (F-F0)
 % OR THE VIDEO STACK. REGIONS (PIXELS) THAT UNDERGO A LARGE, POSITIVE
@@ -7,7 +7,7 @@ function [Lmatrix, mask]=calculateMask(handles)
 % NUMBERED AND THEIR PIXEL VALUES CHANGED TO REFLECT THE NUMBER OF THE ROI
 % ('Lmatrix'). THE CUTOFF THRESHOLD CAN BE SET EITHER ALGORITHMICALLY
 % ('graythresh') OR SET AS A FIXED PERCENTAGE USING INPUT FROM THE USER.
-
+%{
 userThreshold = str2double(get(handles.thresholdLevel,'String'));
 dFMaxProj = handles.DataSet.projectionImages.dFMaxProj;
 dFMaxProjNorm = dFMaxProj./max(dFMaxProj(:));
@@ -29,5 +29,54 @@ mask = mask2;
 
 CC = bwconncomp(mask);
 Lmatrix = labelmatrix(CC);
+%}
 
+% START TEST OF NEW APPROACH FOR ROI GENERATION
+
+%Estimate background pixels
+I = mean(handles.ImageStack,3);
+I = imgaussfilt(I,2);
+thresh = prctile(I(:),30);
+I(I<thresh) = 0;
+backgroundMask = imbinarize(I);
+
+% Look in the region around the stimulation (-2 seconds : 3 seconds)
+frameRate=str2double(get(handles.enterframerate,'String'));
+stimFrame = str2num(get(handles.stimFrameNumber,'String'));
+stimRegion = (stimFrame - floor(2*frameRate)):(stimFrame + floor(3*frameRate));
+stimStack = handles.ImageStack(:,:,stimRegion);
+
+f0 = mean(stimStack(:,:,1:20),3);
+dfof = zeros(size(stimStack));
+for i = 1:size(stimStack,3)
+    frame = stimStack(:,:,i);
+    dfof(:,:,i) = (frame-f0)./f0;
+end
+
+dfofMaxProjection = max(dfof,[],3);
+dfofMaxProjection(~backgroundMask)=NaN;
+
+
+I = dfofMaxProjection;
+I = medfilt2(I,[3 3]);
+%T=graythresh(dfofMaxProjection);
+userThreshold = str2double(get(handles.thresholdLevel,'String'));
+T = prctile(dfofMaxProjection(~isnan(dfofMaxProjection)),userThreshold);
+
+%USER SET THRESHOLD:
+%T=userThreshold./100; %In percent
+
+mask1 = imbinarize(I, T); %Threshold image
+
+%strelsize=get(handles.strelSlider,'Value');
+strelsize = 2;
+se = strel('disk',strelsize);
+mask2 = imerode(mask1,se);
+mask3 = imdilate(mask2,se);
+
+mask = mask3;
+
+CC = bwconncomp(mask);
+Lmatrix = labelmatrix(CC);
+Lmatrix = imdilate(Lmatrix,se);
 end

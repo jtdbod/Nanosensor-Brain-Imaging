@@ -968,7 +968,7 @@ function CalculateROIs_Callback(hObject, eventdata, handles)
 strelsize=get(handles.strelSlider,'Value');
 numopens=get(handles.numopens_slider,'Value');
 
-[roiMask,~]=calculateMask(handles);
+[roiMask,~,dfofMaxProjection]=calculateMask(handles);
 if max(roiMask)==0
     currFig = gcf;
     axes(handles.axes2);
@@ -987,9 +987,9 @@ else
 
     roi_list = nonzeros(unique(roiMask));
     mask = roiMask;
-    maxdFProjImage = handles.DataSet.projectionImages.dFMaxProj;
-    imagesc(maxdFProjImage); hold on;
-    title('Maximum F-F_{0} Projection')
+    dfofImage = medfilt2(dfofMaxProjection);
+    imagesc(dfofImage); hold on;
+    title('Maximum dF/F Projection @ Stimulation')
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
         roi_mask = mask;
@@ -1013,6 +1013,7 @@ else
     end
     %Store the ROI mask (roiMask) into the figure handles structure
     handles.DataSet.roiMask = roiMask;
+    handles.DataSet.projectionImages.dfofMaxProjection = dfofMaxProjection;
     guidata(hObject,handles);%To save DataSet to handles
 end
 
