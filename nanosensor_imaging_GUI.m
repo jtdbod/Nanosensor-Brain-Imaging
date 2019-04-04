@@ -315,7 +315,7 @@ for file = 1:size(tifFiles,1)
     end
 
 
-    handles = generateGrid(handles);
+    handles = generateRois(handles);
     guidata(hObject,handles);
     handles = processTifFile(handles);
     guidata(hObject,handles);

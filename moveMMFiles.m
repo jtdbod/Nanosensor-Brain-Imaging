@@ -1,5 +1,6 @@
-currentDir = dir();
-mainDirectory = pwd;
+%%
+mainDirectory = uigetdir();
+
 folderIndex = find(vertcat(currentDir.isdir));
 
 folderList = currentDir(folderIndex);
@@ -13,7 +14,7 @@ for i = 1:size(folderList)
     if ~isempty(filename)
     movefile(filename.name,mainDirectory)
     end
-    cd ..
+    cd(mainDirectory)
 end
 
 
