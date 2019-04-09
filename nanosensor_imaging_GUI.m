@@ -1407,6 +1407,20 @@ for roiNum = 1:numROIs
     transientIndices(roiNum,:) = transientIndex;
 end
 
+% Check if trace contains significant transient after stimulation
+stimFrame = str2double(get(handles.stimFrameNumber,'String'));
+frameNumbers = stimFrame-10:stimFrame+50;
+isSignificant = zeros(size(transientIndices,1),1);
+%Set condition for "significance": Are more than 10% of points after
+%stimulation signficiant?
+for i = 1:size(transientIndices,1)
+    if sum(transientIndices(i,frameNumbers))/length(transientIndices(i,frameNumbers))>0.1
+        handles.DataSet.measuredValues(i).isSignificant = 1;
+    else
+        handles.DataSet.measuredValues(i).isSignificant = 0;
+    end
+end
+
 %Plot traces color coded according to transientIndex
 %Plot all dF/F traces
     axes(handles.axes2);
