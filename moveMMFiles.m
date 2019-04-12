@@ -1,20 +1,20 @@
 %%
 mainDirectory = uigetdir();
+dirContent = dir(mainDirectory);
+folderIndex = find(vertcat(dirContent.isdir));
 
-folderIndex = find(vertcat(currentDir.isdir));
-
-folderList = currentDir(folderIndex);
+folderList = dirContent(folderIndex);
 
 folderList = folderList(3:end); %Exclude '.' and '..'
 
 for i = 1:size(folderList)
     
-    cd(folderList(i).name);
-    filename = dir('*.tif');
+    pathname = strcat(mainDirectory,'/',(folderList(i).name));
+    filename = dir(strcat(pathname,'/*.tif'));
     if ~isempty(filename)
-    movefile(filename.name,mainDirectory)
+    movefile(strcat(pathname,'/',filename.name),mainDirectory)
     end
-    cd(mainDirectory)
+
 end
 
 
