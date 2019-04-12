@@ -20,13 +20,17 @@ threshInd = roiIntensities < cutoffThresh;
 allROIs = 1:max(roiMask(:));
 badROIs = allROIs(threshInd);
 
+%Remove bad ROIs
+%{
 for roiNum = badROIs
     badRoiInd = roiMask==roiNum;
     roiMask(badRoiInd)=0; %Set bad ROI pixel values to 0 in the original mask
 end
 
+
 %Renumber remaining ROIs
 cc=bwconncomp(roiMask);
+%}
 roiMask = labelmatrix(cc);
 
 if max(roiMask)==0

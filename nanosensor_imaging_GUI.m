@@ -315,7 +315,8 @@ for file = 1:size(tifFiles,1)
     end
 
 
-    handles = generateRois(handles);
+    %handles = generateRois(handles);
+    handles = generateGrid(handles);
     guidata(hObject,handles);
     handles = processTifFile(handles);
     guidata(hObject,handles);
@@ -1431,12 +1432,16 @@ end
     measuredValues = handles.DataSet.measuredValues;
     for tracenum=1:size(measuredValues,2)
         signal = measuredValues(tracenum).dF;
-        traces(tracenum,:)=signal;
+        if measuredValues(tracenum).isSignificant
+            traces(tracenum,:)=signal;
+        else
+        end
     end
     x = 1:size(traces,2);
     x=x./handles.DataSet.frameRate;
 
     for trace=1:size(traces,1)
+        
         %Calculate a moving baseline
         filterWidth = 10*handles.DataSet.frameRate; %In frames
         baseline = movmean(traces(trace,:),filterWidth);
