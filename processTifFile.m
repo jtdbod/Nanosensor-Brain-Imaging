@@ -13,30 +13,52 @@ if isfield(handles,'ImageStack')
     handles.DataSet.frameRate = str2double(get(handles.enterframerate,'String'));
     handles.DataSet.thresholdValue = str2double(get(handles.thresholdLevel,'String'));
     [measuredValues]=processROI(handles,barhandle);
-    handles.DataSet.measuredValues = measuredValues;
+    
     
     %Calculate whether transients are significant
-        transientIndices = zeros(size(handles.DataSet.measuredValues,2),size(handles.DataSet.measuredValues(1).dF,2));
-        numROIs = size(handles.DataSet.measuredValues,2);
-        for roiNum = 1:numROIs
-            dFF = handles.DataSet.measuredValues(roiNum).dF;
-            [handles transientIndex] = classifyTransients(handles, dFF);
-            transientIndices(roiNum,:) = transientIndex;
-        end
+    transientIndices = zeros(size(measuredValues,2),size(measuredValues(1).dF,2));
+    numROIs = size(measuredValues,2);
+    for roiNum = 1:numROIs
+        dFF = measuredValues(roiNum).dF;
+        [handles transientIndex] = classifyTransients(handles, dFF);
+        transientIndices(roiNum,:) = transientIndex;
+    end
 
-        % Check if trace contains significant transient after stimulation
-        stimFrame = str2double(get(handles.stimFrameNumber,'String'));
-        frameNumbers = stimFrame-10:stimFrame+50;
-        isSignificant = zeros(size(transientIndices,1),1);
-        %Set condition for "significance": Are more than 10% of points after
-        %stimulation signficiant?
-        for i = 1:size(transientIndices,1)
-            if sum(transientIndices(i,frameNumbers))/length(transientIndices(i,frameNumbers))>0.1
-                handles.DataSet.measuredValues(i).isSignificant = 1;
-            else
-                handles.DataSet.measuredValues(i).isSignificant = 0;
-            end
+    % Check if trace contains significant transient after stimulation
+    stimFrame = str2double(get(handles.stimFrameNumber,'String'));
+    frameNumbers = stimFrame-10:stimFrame+50;
+    isSignificant = zeros(size(transientIndices,1),1);
+    %Set condition for "significance": Are more than 10% of points after
+    %stimulation signficiant?
+    isSignificant = zeros(1,size(transientIndices,1));
+    for i = 1:size(transientIndices,1)
+        if sum(transientIndices(i,frameNumbers))/length(transientIndices(i,frameNumbers))>0.1
+            measuredValues(i).isSignificant = 1;
+            isSignificant(i) = 1;
+        else
+            measuredValues(i).isSignificant = 0;
         end
+    end
+    
+    filteredMeasuredData = measuredValues(find(isSignificant));
+    %Renumber ROIs in roiMask
+    roiMask = handles.DataSet.roiMask;
+    newROInum = 1;
+    for i = 1:size(transientIndices,1)
+        if isSignificant(i)
+            logInd = roiMask==i;
+            roiMask(logInd)=newROInum;
+            filteredMeasuredValues(i).roiNUM = newROInum;
+            newROInum = newROInum+1;
+
+        else
+            logInd = roiMask==i;
+            roiMask(logInd)=0;
+        end
+    end
+
+    handles.DataSet.measuredValues = filteredMeasuredData;
+    handles.DataSet.roiMask = roiMask;
 
     %Save dataset to file
     if ~isempty(measuredValues)
