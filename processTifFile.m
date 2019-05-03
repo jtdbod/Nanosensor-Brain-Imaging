@@ -48,7 +48,7 @@ if isfield(handles,'ImageStack')
         if isSignificant(i)
             logInd = roiMask==i;
             roiMask(logInd)=newROInum;
-            filteredMeasuredValues(i).roiNUM = newROInum;
+            filteredMeasuredData(newROInum).roiNUM = newROInum;
             newROInum = newROInum+1;
 
         else
@@ -61,7 +61,7 @@ if isfield(handles,'ImageStack')
     handles.DataSet.roiMask = roiMask;
 
     %Save dataset to file
-    if ~isempty(measuredValues)
+    if ~isempty(filteredMeasuredData)
         DataSet = handles.DataSet;
         specifyFilename = get(handles.specifyFilenameFlag,'Value');
         if specifyFilename
