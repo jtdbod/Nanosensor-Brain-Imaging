@@ -58,8 +58,7 @@ handles.output = hObject;
 colormap(defineGemColormap);
 % Update handles structure
 guidata(hObject, handles);
-isLoaded=0;
-assignin('base','isLoaded',isLoaded);
+
 
 % UIWAIT makes nanosensor_imaging_GUI wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -98,13 +97,12 @@ if ~isequal(FileName,0)
         DataSet.(fn{1})=data.DataSet.(fn{1});
     end
     handles.DataSet = DataSet;
-    guidata(hObject,handles);%To save DataSet to handles
+    
     %Plot file
     plotResults(handles);
    
-    set(handles.CurrentFileLoaded,'String',FileName);
-    isLoaded=1;
-    assignin('base','isLoaded',isLoaded);
+    set(handles.CurrentFileLoaded,'String',strcat(PathName,'/',FileName));
+    guidata(hObject,handles);%To save DataSet to handles
     %Update listbox containing list of each ROI for selection
     roiNames = nonzeros(unique(handles.DataSet.roiMask));
     roiNamesStr = num2str(roiNames);
@@ -154,6 +152,7 @@ elseif strmatch(fileType,'tif') && any(FileName)
     %ADD FILENAME AND IMAGESTACK DATA TO APPDATA
     handles.DataSet(1).fileName = FileName;
     handles.DataSet.pathName = PathName;
+    set(handles.CurrentFileLoaded,'String',strcat(PathName,'/',FileName));
     handles.ImageStack = imageStack;
     handles.DataSet.projectionImages.f0 = mean(imageStack(:,:,1:5),3);
     fileinfo=imfinfo(strcat(PathName,'/',FileName));
@@ -319,6 +318,8 @@ for file = 1:size(tifFiles,1)
     handles = generateGrid(handles);
     guidata(hObject,handles);
     handles = processTifFile(handles);
+    guidata(hObject,handles);
+    handles = calculateDecayConstant(handles);
     guidata(hObject,handles);
 end
 
@@ -1250,104 +1251,8 @@ function calculateTau_Callback(hObject, eventdata, handles)
 %drift as well as filter out motion artifact traces if they exhibit an
 %instantaneous rise time following stimulation. Adapted from code developed
 %by Abraham and Andrew.
-
-%Generate structure containing the dF/F traces, the number of the ROI, and 
-numberOfRois = size(handles.DataSet.measuredValues,2);
-numberOfFrames = size(handles.DataSet.measuredValues(1).dF,2);
-
-traces = struct('RoiNumber',{zeros(numberOfRois,1)},'dF',{zeros(numberOfFrames,1)});
-
-for roinum = 1:numberOfRois
-    traces(roinum).RoiNumber=handles.DataSet.measuredValues(roinum).ROInum;
-    traces(roinum).dF=handles.DataSet.measuredValues(roinum).dF';
-end
-
-%Make data compatible with Abraham/Andrew's first_order_curvefit.m analysis
-
-data = zeros(numberOfFrames,numberOfRois+1); %Add 1 for time dimension
-data(:,1) = (1:numberOfFrames)./handles.DataSet.frameRate; %This column is the time dimension (seconds)
-
-%Fill in dF/F values for each ROI (column)
-for roinum = 1:numberOfRois
-    data(:,roinum+1) = traces(roinum).dF;
-end
-
-flag = 0; %This indicates whether traces that look like motion artifacts are filtered out. Will implement a user defined checkbox for this later.
-
-%Check if decay constants have been calculated already
-if ~isfield(handles.DataSet.measuredValues,'decayFit')
-    %Calculate first order decay constants and linear fits
-    stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
-    [first_order_constants, first_order_fit] = first_order_curvefit(data, flag, handles);
-    decayConstants = first_order_constants(2,:);
-    timeToPeak = first_order_constants(4,:);
-    %Add tau and peak dF/F for each ROI to gui handles
-    for roinum = 1:numberOfRois
-        handles.DataSet.measuredValues(roinum).dFoFPeak = max(first_order_fit(:,roinum));
-        handles.DataSet.measuredValues(roinum).decayConstant = decayConstants(roinum);
-        handles.DataSet.measuredValues(roinum).decayFit = first_order_fit(:,roinum);
-        handles.DataSet.measuredValues(roinum).timeToPeak = timeToPeak(:,roinum);
-    end
-    guidata(hObject,handles);%To save DataSet to handles
-    %Update saved DataSet file
-    DataSet = handles.DataSet;
-    save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');
-    clear DataSet
-else
-        decayConstants=[];
-        first_order_fit=[];
-    for i=1:size(handles.DataSet.measuredValues,2)
-        first_order_fit(:,i) = handles.DataSet.measuredValues(i).decayFit;
-        decayConstants(i) = handles.DataSet.measuredValues(i).decayConstant;
-    end
-end
-
-%Plot a stack of the fits over the original traces
-
-axes(handles.axes2);
-title('');
-cla(handles.axes2);
-set(handles.axes2,'Ydir','normal')
-hold on
-
-traceData = data(:,2:end)';
-x = 1:size(traceData,2);
-x=x./handles.DataSet.frameRate;
-for trace=1:size(traceData,1)
-    if trace==1
-        plot(x,traceData(trace,:));
-        plottedTrace=traceData(trace,:); %To stack traces on top of each other
-        plot(x,first_order_fit(:,trace));
-    else
-        offSet = max(plottedTrace);
-        plottedTrace = traceData(trace,:)+offSet;
-        plot(x,plottedTrace);
-        plot(x,first_order_fit(:,trace)+offSet);
-    end
-
-    %Label each trace by ROI num
-    text(0,plottedTrace(1),num2str(traces(trace).RoiNumber));
-
-    hold on
-end
-axis tight
-
-%Plot histogram of tau values
-axes(handles.axes3);
-title('');
-cla(handles.axes3);
-set(handles.axes3,'Ydir','normal')
-hold on
-xlabel('\tau (s)')
-ylabel('Counts')
-%hist(decayConstants(find(and(decayConstants<1,decayConstants>0))),20);
-%Filter out strong outliers for tau, i.e. anything that is impossible
-tauRange = (1./decayConstants)<60; %Filter out anything over 60 seconds, which would be unreasonable
-hist(1./decayConstants(tauRange),20);
-
-xlim auto
-ylim auto
-    
+handles = calculateDecayConstant(handles);
+guidata(hObject,handles);
 
 
 % --- Executes on button press in ColorByTau.

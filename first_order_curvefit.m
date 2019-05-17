@@ -19,15 +19,18 @@ for i = 2:size(data,2) %loops over columns (ROIs) of data, excluding the time co
     d = mean(data(1:180,i)); 
     e = std(data(1:180,i));
     x0 = [0.01, 0.01]; %pick arbitrary initial values for the constant and tau 
-    endfit = find(data(b:end,i) > d-e & data(b:end,i) < d+e, 1); %ends fit where trace once again falls within one std of mean baseline
+    %endfit = find(data(b:end,i) > d-e & data(b:end,i) < d+e, 1); %ends fit where trace once again falls within one std of mean baseline
+    endfit = 50; %End the fit 50 frames after stimulation
     xdata = data(b:(b+endfit-1),1);
     ydata = data(b:(b+endfit-1),i);
+
+
     risetime = (b - stimFrameNumber)/handles.DataSet.frameRate;
     
     if flag == 1
         if (a > d+3*e) && (risetime > 0) 
             F = @(x,xdata)x(1)*exp(-x(2)*xdata); %defines first order equation
-            opts = optimset('Display','off');
+            opts = optimset('Display','off','Algorithm','levenberg-marquardt');
             params(1:2,i-1) = transpose(lsqcurvefit(F,x0,xdata,ydata,[],[],opts)); %adds the curve fit parameters to the parameter matrix
             params(3,i-1) = a; %adds the max trace value to the parameter matrix
             params(4,i-1) = risetime; %adds the time to peak to the parameter matrix

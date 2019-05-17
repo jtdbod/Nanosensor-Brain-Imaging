@@ -13,7 +13,7 @@ if isfield(handles,'ImageStack')
     handles.DataSet.frameRate = str2double(get(handles.enterframerate,'String'));
     handles.DataSet.thresholdValue = str2double(get(handles.thresholdLevel,'String'));
     [measuredValues]=processROI(handles,barhandle);
-    
+    handles.DataSet.measuredValues = measuredValues;
     
     %Calculate whether transients are significant
     transientIndices = zeros(size(measuredValues,2),size(measuredValues(1).dF,2));
@@ -59,6 +59,7 @@ if isfield(handles,'ImageStack')
 
     handles.DataSet.measuredValues = filteredMeasuredData;
     handles.DataSet.roiMask = roiMask;
+
 
     %Save dataset to file
     if ~isempty(filteredMeasuredData)

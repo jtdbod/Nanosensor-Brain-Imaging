@@ -5,7 +5,12 @@ function [measuredValues]=processROI(handles,barhandle)
 
     frames=size(imagestack,3);
     %measuredValues = zeros(max(roiMask(:)),frames);
-    measuredValues = struct('MeanIntensity',zeros(1,size(imagestack,3)),'Area',zeros(1,size(imagestack,3)),'CenterX',zeros(1,size(imagestack,3)),'CenterY',zeros(1,size(imagestack,3)),'dF',zeros(1,size(imagestack,3)));
+    measuredValues = struct('MeanIntensity',zeros(1,size(imagestack,3)),...
+        'Area',zeros(1,size(imagestack,3)),...
+        'CenterX',zeros(1,size(imagestack,3)),...
+        'CenterY',zeros(1,size(imagestack,3)),...
+        'dF',zeros(1,size(imagestack,3)),...
+        'dFdetrend',zeros(1,size(imagestack,3)));
     measuredAreas = zeros(max(roiMask(:)),frames);
 
     dataResults=struct('MeanItensity',[zeros(length(frames))],'RoiArea',[],'dF',[zeros(length(frames))]);
@@ -46,7 +51,9 @@ function [measuredValues]=processROI(handles,barhandle)
         f0=mean(measuredValues(roi).MeanIntensity(stimFrameNumber-50:stimFrameNumber));
         f=measuredValues(roi).MeanIntensity;
         df=(f-f0)./f0;
+        dfdetrend = detrend(df);
         measuredValues(roi).dF=df;
+        measuredValues(roi).dFdetrend=dfdetrend;
         measuredValues(roi).Time=(1:length(df))./handles.DataSet.frameRate;
     end
     
