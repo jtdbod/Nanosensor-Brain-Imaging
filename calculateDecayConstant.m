@@ -28,8 +28,9 @@ flag = 0; %This indicates whether traces that look like motion artifacts are fil
 %Check if decay constants have been calculated already
 if ~isfield(handles.DataSet.measuredValues,'decayFit')
     %Calculate first order decay constants and linear fits
-    stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
-    [first_order_constants, first_order_fit] = first_order_curvefit(data, flag, handles);
+    frameRate = handles.DataSet.frameRate;
+    stimFrameNum = str2double(get(handles.stimFrameNumber,'String'));
+    [first_order_constants, first_order_fit] = first_order_curvefit(data, flag, stimFrameNum, frameRate);
     decayConstants = first_order_constants(2,:);
     timeToPeak = first_order_constants(4,:);
     %Add tau and peak dF/F for each ROI to gui handles

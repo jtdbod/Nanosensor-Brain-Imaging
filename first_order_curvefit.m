@@ -1,15 +1,15 @@
-function [params, data_fit] = first_order_curvefit(data, flag, handles)
+function [params, data_fit] = first_order_curvefit(data, flag, stimFrameNum,frameRate)
 
 % Function for fitting first order kinetics that
 % Inputs: drift corrected (or raw) columns containing df/f traces 
 % output: Parameters of first order decay equations and the function used
 % to fit the data points 
 
-stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
+
 
 data_max_find = data; 
-data_max_find(1:stimFrameNumber-20,2:end) = 0;
-data_max_find(stimFrameNumber+50:end,2:end) = 0; %imposes restriction to ensure only max value between frames 181 and 249 inclusive are considered for each ROI
+data_max_find(1:stimFrameNum-20,2:end) = 0;
+data_max_find(stimFrameNum+50:end,2:end) = 0; %imposes restriction to ensure only max value between frames 181 and 249 inclusive are considered for each ROI
 params = zeros(4,(size(data,2)-1)); %creates column of 3 parameters (constant, tau, and peak height) per ROI 
 data_fit = zeros(size(data,1),(size(data,2)-1)); %initialize matrix for the dF/F values with a column per ROI, not including the time column
 
@@ -25,7 +25,7 @@ for i = 2:size(data,2) %loops over columns (ROIs) of data, excluding the time co
     ydata = data(b:(b+endfit-1),i);
 
 
-    risetime = (b - stimFrameNumber)/handles.DataSet.frameRate;
+    risetime = (b - stimFrameNum)/frameRate;
     
     if flag == 1
         if (a > d+3*e) && (risetime > 0) 
