@@ -676,8 +676,9 @@ roi_selected_value = get(handles.roi_listbox,'Value'); %Number of selected eleme
 roi_names = get(handles.roi_listbox,'string'); %Name of ROI selected (using roi_selected_value as index)
 roi_selected=str2num(roi_names(roi_selected_value,:));
 
+
 %Find ROI name that matches selected value
-roi_index=find([handles.DataSet.measuredValues.ROInum]==roi_selected);
+roi_index=find([handles.DataSet.measuredValues.roiNUM]==roi_selected);
 if ~isempty(roi_index)
     axes(handles.axes2)
     cla(handles.axes2)
@@ -694,16 +695,18 @@ if ~isempty(roi_index)
     plot(x,y)
     axis tight
 
-    %Highlight the selected ROI.
-
     %Plot the ROI overlay figure
     currFig = gcf;
     axes(handles.axes1);
     cla(handles.axes1);
+    
+    imagesc(handles.DataSet.projectionImages.f0); hold on;
     roi_list = nonzeros(unique(handles.DataSet.roiMask));
     mask = handles.DataSet.roiMask;
+    
+    %Highlight the selected ROI.
 
-    imagesc(handles.DataSet.projectionImages.f0); hold on;
+
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
         if roi == roi_selected
@@ -1206,7 +1209,9 @@ flag=0;
 data = zeros(size(traces,2),2);
 data(:,1)=(1:size(traces,2))./handles.DataSet.frameRate; %Make first column = frame number for compatibility with 'first_order_curvefit()'
 data(:,2)=meanTrace;
-[first_order_constants, first_order_fit] = first_order_curvefit(data, flag, handles);
+frameRate = handles.DataSet.frameRate;
+stimFrameNum = str2double(get(handles.stimFrameNumber,'String'));
+[first_order_constants, first_order_fit] = first_order_curvefit(data, flag, stimFrameNum, frameRate);
 decayConstant = first_order_constants(2);
 
 
