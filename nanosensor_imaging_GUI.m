@@ -214,6 +214,8 @@ function processfilebutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 handles = processTifFile(handles);
+handles = calculateDecayConstant(handles);
+guidata(hObject,handles);
 guidata(hObject,handles);
 
 
