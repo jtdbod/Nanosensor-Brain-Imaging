@@ -1,3 +1,4 @@
+
 function varargout = nanosensor_imaging_GUI(varargin)
 % NANOSENSOR_IMAGING_GUI MATLAB code for nanosensor_imaging_GUI.fig
 %      NANOSENSOR_IMAGING_GUI, by itself, creates a new NANOSENSOR_IMAGING_GUI or raises the existing
@@ -708,7 +709,7 @@ if ~isempty(roi_index)
     
     %Highlight the selected ROI.
 
-
+    
     for roi_index=1:length(roi_list)
         roi = roi_list(roi_index);
         if roi == roi_selected
@@ -732,6 +733,8 @@ if ~isempty(roi_index)
           %set(h,'Color',color,'FontSize',14);
         end
     end
+    
+
 else 
     axes(handles.axes2)
     cla(handles.axes2)
