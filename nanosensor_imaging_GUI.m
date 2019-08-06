@@ -1139,33 +1139,8 @@ function GenerateRoiGrid_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 handles = generateGrid(handles);
 guidata(hObject,handles);
-%Generate grid of ROIs
-gridSize=str2num(get(handles.roiBoxSize,'String'));
-height = size(handles.ImageStack,1);
-width = size(handles.ImageStack,2);
-mask = ones(height,width);
-mask(gridSize:gridSize:end,:)=0;
-mask(:,gridSize:gridSize:end)=0;
-%Number each ROI
-cc=bwconncomp(mask);
-roiMask = labelmatrix(cc);
-dfImage = handles.DataSet.projectionImages.dFMaxProj;
-roiData = regionprops(roiMask,dfImage,'MeanIntensity');
-
-roiIntensities = [roiData(:).MeanIntensity];
-
-cutoffThresh = mean(dfImage(:))+.5*(std(dfImage(:)));
-threshInd = roiIntensities < cutoffThresh;
-
-allROIs = 1:max(roiMask(:));
-badROIs = allROIs(threshInd);
-
-for roiNum = badROIs
-    badRoiInd = roiMask==roiNum;
-    roiMask(badRoiInd)=0; %Set bad ROI pixel values to 0 in the original mask
 
 
 % --- Executes on button press in ShowAllRois.
@@ -1199,7 +1174,6 @@ for roi_index=1:length(roi_list)
     %calcluates dF/F as the maximum in a fixed time interval after
     %stimulation.
     dFmask(mask==roi)=roi_maxdF;
-
 end
 
 imagesc(dFmask);

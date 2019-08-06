@@ -1,10 +1,6 @@
 function [handles]=calculateDecayConstant(handles)%Generate grid of ROIs
 %Generate structure containing the dF/F traces, the number of the ROI, and 
 numberOfRois = size(handles.DataSet.measuredValues,2);
-if numberOfRois==0
-    return
-end
-
 numberOfFrames = size(handles.DataSet.measuredValues(1).dF,2);
 
 traces = struct('RoiNumber',{zeros(numberOfRois,1)},'dF',{zeros(numberOfFrames,1)});
