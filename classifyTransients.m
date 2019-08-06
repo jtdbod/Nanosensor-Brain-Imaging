@@ -2,11 +2,11 @@ function [handles,transientIndex]=classifyTransients(handles,dFF)
 %Trying degative transient noise estimation
 
 frameRate = handles.DataSet.frameRate;
+
 x = 1:length(dFF);
 x = x./frameRate;
-filterWidth = floor(5*frameRate); %In seconds
+filterWidth = floor(2*frameRate); %In seconds
 baselineFilt = movmean(dFF,filterWidth);
-
 %Find negative values of (dF/F0 - baselineFilt). Signal that drops below
 %baseline is not associated with a transient fluorescnece intensity spike
 %and is used to estimate the fluorescence fluctuation, sigma.

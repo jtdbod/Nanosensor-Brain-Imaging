@@ -54,7 +54,7 @@ function [measuredValues]=processROI(handles,barhandle)
         dfdetrend = detrend(df);
         measuredValues(roi).dF=df;
         measuredValues(roi).dFdetrend=dfdetrend;
-        measuredValues(roi).zScore=zscore(detrend(f));
+        measuredValues(roi).zScore=zscore(dtrend(f));
         measuredValues(roi).Time=(1:length(df))./handles.DataSet.frameRate;
     end
     
