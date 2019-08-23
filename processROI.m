@@ -2,6 +2,7 @@ function [measuredValues]=processROI(handles,barhandle)
     
     imagestack = handles.ImageStack;
     roiMask = handles.DataSet.roiMask;
+    frameRate = handles.DataSet.frameRate;
 
     frames=size(imagestack,3);
     %measuredValues = zeros(max(roiMask(:)),frames);
@@ -54,8 +55,8 @@ function [measuredValues]=processROI(handles,barhandle)
         dfdetrend = detrend(df);
         measuredValues(roi).dF=df;
         measuredValues(roi).dFdetrend=dfdetrend;
-        measuredValues(roi).zScore=zscore(detrend(f));
-        measuredValues(roi).Time=(1:length(df))./handles.DataSet.frameRate;
+        measuredValues(roi).zScore=processTrace(f,frameRate);
+        measuredValues(roi).Time=(1:length(df))./frameRate;
     end
     
     delete(barhandle);
