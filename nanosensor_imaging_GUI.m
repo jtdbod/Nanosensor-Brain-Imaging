@@ -1596,11 +1596,11 @@ for file = 1:numFiles
 end
 numROIs = size(processedData(2).data.measuredValues,2);
 peakdF = zeros(numFiles,numROIs);
-isSignificant = zeros(numFiles,numROIs);
+%isSignificant = zeros(numFiles,numROIs);
 
 for file = 1:numFiles
     peakdF(file,:) = [processedData(file).data.measuredValues.dFoFPeak];
-    isSignificant(file,:) = [processedData(file).data.measuredValues.isSignificant];
+    %isSignificant(file,:) = [processedData(file).data.measuredValues.isSignificant];
 end
 
 meanPeakdF = mean(peakdF,1);
