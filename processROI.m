@@ -49,13 +49,17 @@ function [measuredValues]=processROI(handles,barhandle)
     %Calculate dF/F using average of 50 previous frames
     for roi=1:numROIs
         stimFrameNumber = str2double(get(handles.stimFrameNumber,'String'));
-        f0=mean(measuredValues(roi).MeanIntensity(stimFrameNumber-50:stimFrameNumber));
+        if stimFrameNumber < 55
+            f0=mean(measuredValues(roi).MeanIntensity(stimFrameNumber-10:stimFrameNumber));
+        else
+            f0=mean(measuredValues(roi).MeanIntensity(stimFrameNumber-50:stimFrameNumber));
+        end
         f=measuredValues(roi).MeanIntensity;
         df=(f-f0)./f0;
         dfdetrend = detrend(df);
         measuredValues(roi).dF=df;
         measuredValues(roi).dFdetrend=dfdetrend;
-        measuredValues(roi).zScore=processTrace(f,frameRate);
+        measuredValues(roi).zScore=processTrace(f,frameRate,stimFrameNumber);
         measuredValues(roi).Time=(1:length(df))./frameRate;
     end
     

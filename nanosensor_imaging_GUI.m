@@ -23,7 +23,7 @@ function varargout = nanosensor_imaging_GUI(varargin)
 
 % Edit the above text to modify the response to help nanosensor_imaging_GUI
 
-% Last Modified by GUIDE v2.5 21-Feb-2019 10:31:55
+% Last Modified by GUIDE v2.5 14-Oct-2019 13:29:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -160,21 +160,21 @@ elseif strmatch(fileType,'tif') && any(FileName)
     handles.DataSet.numFrames=size(fileinfo,1);
     %Generate Mean Projection and dF Max Projecitons and store in handles
     if ~isfield(handles.DataSet.projectionImages,'meanProj')
-    currFig = gcf;
-    axes(handles.axes1);
-    cla(handles.axes1);
-    title('Calculating Mean Projection')
-    xlabel('')
-    imageStack = handles.ImageStack;
-    imstack = imageStack;
-    if any(imageStack(:)<0)
-        imstack = imageStack-min(imageStack(:));
-    end
-    
-    meanProjImage = mean(imstack,3);
-    meanProjImageFilt = medfilt2(meanProjImage,[3 3]);
-    handles.DataSet.projectionImages.meanProj = meanProjImageFilt;
-    guidata(hObject,handles);
+        currFig = gcf;
+        axes(handles.axes1);
+        cla(handles.axes1);
+        title('Calculating Mean Projection')
+        xlabel('')
+        imageStack = handles.ImageStack;
+        imstack = imageStack;
+        if any(imageStack(:)<0)
+            imstack = imageStack-min(imageStack(:));
+        end
+
+        meanProjImage = mean(imstack,3);
+        meanProjImageFilt = medfilt2(meanProjImage,[3 3]);
+        handles.DataSet.projectionImages.meanProj = meanProjImageFilt;
+        guidata(hObject,handles);
     end
 
     if ~isfield(handles.DataSet.projectionImages,'dFMaxProj')
@@ -1478,3 +1478,119 @@ function specifyFilenameFlag_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of specifyFilenameFlag
+
+
+% --- Executes on button press in AltBatchProcess.
+function AltBatchProcess_Callback(hObject, eventdata, handles)
+% hObject    handle to AltBatchProcess (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+selpath = uigetdir;
+tifFiles = dir(strcat(selpath,'/*.tif'));
+
+for file = 1:size(tifFiles,1)
+
+    %CREATE DATASTRUCTURE FOR USER DATA AND STORE IN GUI HANDLES
+    handles.DataSet = struct('frameRate',{},'fileName',{},'pathName',{'PathName'},'roiMask',{},'measuredValues',{},...
+        'projectionImages',{},'thresholdValue',{},'numFrames',{},'stimFrames',{});
+    handles.ImageStack = [];
+
+    %LOAD A VIDEO STACK INTO APPDATA MEMORY (EITHER TIF OR SPE)
+    if true(get(handles.radiobuttonSPE,'Value'))
+        fileType = 'spe';
+    elseif true(get(handles.radiobuttonTIF,'Value'))
+        fileType = 'tif';
+    end
+
+    %[FileName,PathName,~] = uigetfile(strcat('*.',fileType));
+    FileName = tifFiles(file).name;
+    PathName = selpath;
+
+    if strmatch(fileType,'spe')
+        error('SPE is not supported in this version. Bug Travis and he will fix it in a few minutes');
+    elseif FileName==0
+        %User cancelled open command. Do nothing.
+    elseif strmatch(fileType,'tif') && any(FileName)
+        %Make progress bar
+        barhandle = waitbar(0,'1','Name',sprintf('Processing File 1 of 1'),...
+                'CreateCancelBtn',...
+                'setappdata(gcbf,''canceling'',1)');
+        setappdata(barhandle,'canceling',0)
+        %Load stack
+        [imageStack]=loadIMstackTIF(PathName,FileName,1,barhandle);
+        %ADD FILENAME AND IMAGESTACK DATA TO APPDATA
+        handles.DataSet(1).fileName = FileName;
+        handles.DataSet.pathName = PathName;
+        handles.ImageStack = imageStack;
+        handles.DataSet.projectionImages.f0 = mean(imageStack(:,:,1:5),3);
+        fileinfo=imfinfo(strcat(PathName,'/',FileName));
+        handles.DataSet.numFrames=size(fileinfo,1);
+        %Generate Mean Projection and dF Max Projecitons and store in handles
+        if ~isfield(handles.DataSet.projectionImages,'meanProj')
+        currFig = gcf;
+        axes(handles.axes1);
+        cla(handles.axes1);
+        title('Calculating Mean Projection')
+        xlabel('')
+        imageStack = handles.ImageStack;
+        imstack = imageStack;
+        if any(imageStack(:)<0)
+            imstack = imageStack-min(imageStack(:));
+        end
+
+        meanProjImage = mean(imstack,3);
+        meanProjImageFilt = medfilt2(meanProjImage,[3 3]);
+        handles.DataSet.projectionImages.meanProj = meanProjImageFilt;
+        guidata(hObject,handles);
+        end
+
+        if ~isfield(handles.DataSet.projectionImages,'dFMaxProj')
+        currFig = gcf;
+        axes(handles.axes1);
+        cla(handles.axes1);
+        title('Calculating dF Projection')
+        xlabel('')
+        imstack = handles.ImageStack;
+        dFImage = imstack-handles.DataSet.projectionImages.meanProj;
+        maxdFProjImage = max(dFImage,[],3);
+        maxdFProjImageFilt = medfilt2(maxdFProjImage,[4 4]);
+        handles.DataSet.projectionImages.dFMaxProj = maxdFProjImageFilt;
+        guidata(hObject,handles);
+        end
+        clear imstack dFImage
+        guidata(hObject,handles);%To save DataSet to handles
+
+        %Display first frame after file loads.
+        axes(handles.axes1);
+        cla(handles.axes1);
+        colormap(defineGemColormap);
+        imagesc(imageStack(:,:,1));
+        title('Frame 1')
+        cla(handles.axes2);
+        cla(handles.axes3);
+
+        delete(barhandle);
+        guidata(hObject,handles);%To save DataSet to handles
+    else
+        error('Error. Filetype must be "tif" or "spe"');
+    end
+
+
+    %handles = generateRois(handles);
+    handles = generateGrid(handles);
+    guidata(hObject,handles);
+    handles = processTifFileMOD(handles);
+    guidata(hObject,handles);
+    handles = calculateDecayConstant(handles);
+    guidata(hObject,handles);
+    
+end
+
+
+% --- Executes on button press in classifyAndFilter.
+function classifyAndFilter_Callback(hObject, eventdata, handles)
+% hObject    handle to classifyAndFilter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of classifyAndFilter

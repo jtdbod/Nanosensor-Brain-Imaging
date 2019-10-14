@@ -14,55 +14,70 @@ if isfield(handles,'ImageStack')
     handles.DataSet.thresholdValue = str2double(get(handles.thresholdLevel,'String'));
     [measuredValues]=processROI(handles,barhandle);
     handles.DataSet.measuredValues = measuredValues;
-    
+
     %Calculate whether transients are significant
-    transientIndices = zeros(size(measuredValues,2),size(measuredValues(1).dF,2));
-    numROIs = size(measuredValues,2);
-    for roiNum = 1:numROIs
-        dFF = measuredValues(roiNum).dF;
-        [handles transientIndex] = classifyTransients(handles, dFF);
-        transientIndices(roiNum,:) = transientIndex;
-    end
-
-    % Check if trace contains significant transient after stimulation
-    stimFrame = str2double(get(handles.stimFrameNumber,'String'));
-    frameNumbers = stimFrame-10:stimFrame+50;
-    isSignificant = zeros(size(transientIndices,1),1);
-    %Set condition for "significance": Are more than 10% of points after
-    %stimulation signficiant?
-    isSignificant = zeros(1,size(transientIndices,1));
-    for i = 1:size(transientIndices,1)
-        if sum(transientIndices(i,frameNumbers))/length(transientIndices(i,frameNumbers))>0.1
-            measuredValues(i).isSignificant = 1;
-            isSignificant(i) = 1;
-        else
-            measuredValues(i).isSignificant = 0;
+    userSetClassifyAndFilter = get(handles.classifyAndFilter,'Value');
+    if userSetClassifyAndFilter
+        transientIndices = zeros(size(measuredValues,2),size(measuredValues(1).dF,2));
+        numROIs = size(measuredValues,2);
+        for roiNum = 1:numROIs
+            dFF = measuredValues(roiNum).dF;
+            [handles transientIndex] = classifyTransients(handles, dFF);
+            transientIndices(roiNum,:) = transientIndex;
         end
-    end
-    
-    filteredMeasuredData = measuredValues(find(isSignificant));
-    %Renumber ROIs in roiMask
-    roiMask = handles.DataSet.roiMask;
-    newROInum = 1;
-    for i = 1:size(transientIndices,1)
-        if isSignificant(i)
-            logInd = roiMask==i;
-            roiMask(logInd)=newROInum;
-            filteredMeasuredData(newROInum).roiNUM = newROInum;
-            newROInum = newROInum+1;
 
-        else
-            logInd = roiMask==i;
-            roiMask(logInd)=0;
+        % Check if trace contains significant transient after stimulation
+        stimFrame = str2double(get(handles.stimFrameNumber,'String'));
+        frameNumbers = stimFrame-10:stimFrame+50;
+        isSignificant = zeros(size(transientIndices,1),1);
+        %Set condition for "significance": Are more than 10% of points after
+        %stimulation signficiant?
+        isSignificant = zeros(1,size(transientIndices,1));
+        for i = 1:size(transientIndices,1)
+            if sum(transientIndices(i,frameNumbers))/length(transientIndices(i,frameNumbers))>0.1
+                measuredValues(i).isSignificant = 1;
+                isSignificant(i) = 1;
+            else
+                measuredValues(i).isSignificant = 0;
+            end
         end
-    end
 
-    handles.DataSet.measuredValues = filteredMeasuredData;
-    handles.DataSet.roiMask = roiMask;
+        filteredMeasuredData = measuredValues(find(isSignificant));
+        %Renumber ROIs in roiMask
+        roiMask = handles.DataSet.roiMask;
+        newROInum = 1;
+        for i = 1:size(transientIndices,1)
+            if isSignificant(i)
+                logInd = roiMask==i;
+                roiMask(logInd)=newROInum;
+                filteredMeasuredData(newROInum).roiNUM = newROInum;
+                newROInum = newROInum+1;
 
+            else
+                logInd = roiMask==i;
+                roiMask(logInd)=0;
+            end
+        end
 
-    %Save dataset to file
-    if ~isempty(filteredMeasuredData)
+        handles.DataSet.measuredValues = filteredMeasuredData;
+        handles.DataSet.roiMask = roiMask;
+
+        %Save dataset to file
+        if ~isempty(filteredMeasuredData) 
+            DataSet = handles.DataSet;
+            specifyFilename = get(handles.specifyFilenameFlag,'Value');
+            if specifyFilename
+                [file path] = uiputfile('*.mat');
+                save(strcat(path,file));
+            else
+                save(strcat(handles.DataSet.pathName,'/',handles.DataSet.fileName(1:end-4),'.mat'),'DataSet');      
+            end
+            %PLOT THE RESULTS
+            plotResults(handles);
+            set(handles.CurrentFileLoaded,'String',handles.DataSet.fileName);
+            delete(barhandle);
+        end
+    else
         DataSet = handles.DataSet;
         specifyFilename = get(handles.specifyFilenameFlag,'Value');
         if specifyFilename
@@ -76,6 +91,7 @@ if isfield(handles,'ImageStack')
         set(handles.CurrentFileLoaded,'String',handles.DataSet.fileName);
         delete(barhandle);
     end
+    
 else
     error('Please load imagestack first.')
 end

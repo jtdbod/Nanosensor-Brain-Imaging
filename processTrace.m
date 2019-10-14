@@ -1,11 +1,11 @@
-function [zscoreTrace] = processTrace(trace,frameRate)
+function [zscoreTrace] = processTrace(trace,frameRate,stimFrameNumber)
 %trace = currentDataset.measuredValues(1).MeanIntensity;
 x=1:length(trace);
 window = 20; %seconds
 frameWindow = window*frameRate;
 
-xbase = [x(1:190),x(end-50:end)];
-baseline = interp1(xbase,trace(xbase),1:600,'loess');
+xbase = [x(1:stimFrameNumber-10),x(stimFrameNumber+50:end)];
+baseline = interp1(xbase,trace(xbase),1:length(x),'loess');
 smoothTrace = smooth(baseline,frameWindow);
 
 centeredTrace = trace-smoothTrace';
