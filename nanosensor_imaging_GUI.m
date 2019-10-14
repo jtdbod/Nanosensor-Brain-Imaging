@@ -1574,8 +1574,6 @@ for file = 1:size(tifFiles,1)
     else
         error('Error. Filetype must be "tif" or "spe"');
     end
-
-
     %handles = generateRois(handles);
     handles = generateGrid(handles);
     guidata(hObject,handles);
@@ -1583,9 +1581,42 @@ for file = 1:size(tifFiles,1)
     guidata(hObject,handles);
     handles = calculateDecayConstant(handles);
     guidata(hObject,handles);
-    
 end
 
+% AVERAGE ROIS OVER ALL FILES IN FOLDER AND PLOT SCATTER PLOT
+matFiles = dir(strcat(selpath,'/*.mat'));
+
+processedData=struct('data',[]);
+numFiles = size(matFiles,1);
+for file = 1:numFiles
+    FileName = matFiles(file).name;
+    PathName = selpath;
+    load(strcat(PathName,'/',FileName));
+    processedData(file).data = DataSet;
+end
+numROIs = size(processedData(2).data.measuredValues,2);
+peakdF = zeros(numFiles,numROIs);
+isSignificant = zeros(numFiles,numROIs);
+
+for file = 1:numFiles
+    peakdF(file,:) = [processedData(file).data.measuredValues.dFoFPeak];
+    isSignificant(file,:) = [processedData(file).data.measuredValues.isSignificant];
+end
+
+meanPeakdF = mean(peakdF,1);
+semPeakdF = std(peakdF,[],1)./numFiles;
+
+axes(handles.axes2);
+cla(handles.axes2);
+plotSpread({meanPeakdF},'distributionMarkers','o')
+ylabel('Mean Peak dF/F for Each ROI')
+axes(handles.axes3);
+cla(handles.axes3);
+scatter(meanPeakdF,semPeakdF)
+xlabel('Mean Peak dF/F for Each ROI')
+ylabel('SEM of Peak dF/F')
+
+save(strcat(PathName,'/','meanPeakdF.mat'),'meanPeakdF','semPeakdF')
 
 % --- Executes on button press in classifyAndFilter.
 function classifyAndFilter_Callback(hObject, eventdata, handles)
